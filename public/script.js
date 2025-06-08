@@ -12,10 +12,11 @@ let usedQuestions = []; // Track used questions
 // Available topics (only those with prepared images)
 const availableTopics = {
     'animals': 'Animals',
-    'global-celebrities': 'Global Stars', 
+    'global-celebrities': 'Global Stars',
     'history': 'Historical Figures',
     'korean-celebrities': 'Korean Celebrities',
-    'flags': 'Flags'
+    'flags': 'Flags',
+    'capitals': 'Capitals'
 };
 
 // DOM elements
@@ -29,6 +30,7 @@ const timerElement = document.getElementById('timer');
 const correctAnswerElement = document.getElementById('correct-answer');
 const clickInstruction = document.querySelector('.click-instruction');
 const logoContainer = document.querySelector('.logo-container');
+const countryNameElement = document.getElementById('country-name');
 
 // Game start function
 async function startGame(topic = null) {
@@ -116,12 +118,20 @@ function loadQuestion() {
     personImage.src = person.image;
     personImage.alt = `${person.name} image`;
     
-    // Add flag-image class for flags topic
+    // Add flag-image class for flags and capitals topics
     personImage.classList.remove('flag-image', 'korean-celebrity-image');
-    if (currentTopic === 'flags') {
+    if (currentTopic === 'flags' || currentTopic === 'capitals') {
         personImage.classList.add('flag-image');
     } else if (currentTopic === 'korean-celebrities') {
         personImage.classList.add('korean-celebrity-image');
+    }
+    
+    // Show country name for capitals topic
+    if (currentTopic === 'capitals' && person.countryName) {
+        countryNameElement.textContent = person.countryName;
+        countryNameElement.style.display = 'block';
+    } else {
+        countryNameElement.style.display = 'none';
     }
     
     // Hide result container and show click instruction

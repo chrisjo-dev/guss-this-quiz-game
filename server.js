@@ -30,27 +30,61 @@ const topicMapping = {
     'korean-celebrities': 'korean_celebrities', 
     'history': 'historical_figures',
     'animals': 'animals',
-    'flags': 'flags'
+    'flags': 'flags',
+    'capitals': 'capitals'
+};
+
+// 국가명과 수도 매핑 (capitals용)
+const countryCapitalMapping = {
+    "Seoul": "South Korea", "Tokyo": "Japan", "Beijing": "China", "Washington D.C.": "United States", "London": "United Kingdom",
+    "Paris": "France", "Berlin": "Germany", "Rome": "Italy", "Madrid": "Spain", "Moscow": "Russia",
+    "Ottawa": "Canada", "Canberra": "Australia", "Brasilia": "Brazil", "New Delhi": "India", "Pretoria": "South Africa",
+    "Cairo": "Egypt", "Ankara": "Turkey", "Athens": "Greece", "Stockholm": "Sweden", "Oslo": "Norway",
+    "Copenhagen": "Denmark", "Helsinki": "Finland", "Reykjavik": "Iceland", "Lisbon": "Portugal", "Dublin": "Ireland",
+    "Bern": "Switzerland", "Vienna": "Austria", "Brussels": "Belgium", "Amsterdam": "Netherlands", "Warsaw": "Poland",
+    "Prague": "Czech Republic", "Budapest": "Hungary", "Bucharest": "Romania", "Sofia": "Bulgaria", "Kyiv": "Ukraine",
+    "Zagreb": "Croatia", "Belgrade": "Serbia", "Ljubljana": "Slovenia", "Bratislava": "Slovakia", "Podgorica": "Montenegro",
+    "Tirana": "Albania", "Skopje": "North Macedonia", "Sarajevo": "Bosnia and Herzegovina", "Chisinau": "Moldova", 
+    "Riga": "Latvia", "Vilnius": "Lithuania", "Tallinn": "Estonia", "Minsk": "Belarus", "Yerevan": "Armenia", "Tbilisi": "Georgia",
+    "Baku": "Azerbaijan", "Nur-Sultan": "Kazakhstan", "Tashkent": "Uzbekistan", "Bishkek": "Kyrgyzstan", "Dushanbe": "Tajikistan", 
+    "Ashgabat": "Turkmenistan", "Ulaanbaatar": "Mongolia", "Hanoi": "Vietnam", "Bangkok": "Thailand", "Kuala Lumpur": "Malaysia",
+    "Singapore": "Singapore", "Jakarta": "Indonesia", "Manila": "Philippines", "Naypyidaw": "Myanmar", "Phnom Penh": "Cambodia", 
+    "Vientiane": "Laos", "Dhaka": "Bangladesh", "Islamabad": "Pakistan", "Colombo": "Sri Lanka", "Kathmandu": "Nepal",
+    "Kabul": "Afghanistan", "Tehran": "Iran", "Baghdad": "Iraq", "Riyadh": "Saudi Arabia", "Abu Dhabi": "UAE", 
+    "Doha": "Qatar", "Kuwait City": "Kuwait", "Muscat": "Oman", "Sana'a": "Yemen", "Damascus": "Syria",
+    "Beirut": "Lebanon", "Jerusalem": "Israel", "Ramallah": "Palestine", "Amman": "Jordan", "Rabat": "Morocco", 
+    "Algiers": "Algeria", "Tunis": "Tunisia", "Tripoli": "Libya", "Khartoum": "Sudan", "Addis Ababa": "Ethiopia",
+    "Nairobi": "Kenya", "Dodoma": "Tanzania", "Kampala": "Uganda", "Kigali": "Rwanda", "Kinshasa": "Congo", 
+    "Abuja": "Nigeria", "Accra": "Ghana", "Dakar": "Senegal", "Yaounde": "Cameroon", "Yamoussoukro": "Ivory Coast"
 };
 
 // 문자열 배열을 이미지 경로가 포함된 인물 객체로 변환 (이미지가 있는 경우만)
 function convertToPersonObjects(topic, names) {
     return names.filter(name => {
+        // capitals는 flags 이미지를 사용
+        const imageTopicDir = topic === 'capitals' ? 'flags' : topic;
+        const searchName = topic === 'capitals' ? countryCapitalMapping[name] : name;
+        
+        if (topic === 'capitals' && !searchName) {
+            console.log(`⚠️  수도 ${name}에 대한 국가를 찾을 수 없습니다`);
+            return false;
+        }
+        
         // 여러 파일명 패턴 시도
         const patterns = [
             // 기본 패턴: jungkook.jpg
-            name.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase(),
+            searchName.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase(),
             // 첫글자 대문자 패턴: Jungkook.jpg  
-            name.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase().replace(/^./, str => str.toUpperCase()),
+            searchName.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase().replace(/^./, str => str.toUpperCase()),
             // 한영 조합 패턴: Jungkook_정국.jpg
-            name.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').replace(/^./, str => str.toUpperCase()) + '_' + name,
+            searchName.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').replace(/^./, str => str.toUpperCase()) + '_' + searchName,
             // 영어만 대문자: Jungkook_정국.jpg (영어 부분만)
-            name.split(' ')[0] ? name.split(' ')[0].replace(/[^\w]/g, '').replace(/^./, str => str.toUpperCase()) : name,
+            searchName.split(' ')[0] ? searchName.split(' ')[0].replace(/[^\w]/g, '').replace(/^./, str => str.toUpperCase()) : searchName,
         ];
         
         // 각 패턴으로 파일 존재 확인
         for (let pattern of patterns) {
-            const imagePath = path.join(__dirname, 'public', 'images', topic, `${pattern}.jpg`);
+            const imagePath = path.join(__dirname, 'public', 'images', imageTopicDir, `${pattern}.jpg`);
             if (fs.existsSync(imagePath)) {
                 return true;
             }
@@ -58,33 +92,37 @@ function convertToPersonObjects(topic, names) {
         
         // 실제 디렉토리에서 파일 검색 (마지막 수단) - 더 정확한 매칭
         try {
-            const imageDir = path.join(__dirname, 'public', 'images', topic);
+            const imageDir = path.join(__dirname, 'public', 'images', imageTopicDir);
             const files = fs.readdirSync(imageDir);
-            const searchName = name.toLowerCase().replace(/\s+/g, '_');
+            const fileSearchName = searchName.toLowerCase().replace(/\s+/g, '_');
             
             return files.some(file => {
                 const fileNameLower = file.toLowerCase();
                 // 정확한 매칭만 허용 (부분 매칭 방지)
-                return fileNameLower.startsWith(searchName) || 
-                       fileNameLower.startsWith(searchName.replace(/_/g, ''));
+                return fileNameLower.startsWith(fileSearchName) || 
+                       fileNameLower.startsWith(fileSearchName.replace(/_/g, ''));
             });
         } catch (error) {
             console.log(`⚠️  이미지를 찾을 수 없습니다: ${name}`);
             return false;
         }
     }).map(name => {
+        // capitals는 flags 이미지를 사용
+        const imageTopicDir = topic === 'capitals' ? 'flags' : topic;
+        const searchName = topic === 'capitals' ? countryCapitalMapping[name] : name;
+        
         // 실제 파일명 찾기
         const patterns = [
-            name.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase(),
-            name.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase().replace(/^./, str => str.toUpperCase()),
-            name.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').replace(/^./, str => str.toUpperCase()) + '_' + name,
-            name.split(' ')[0] ? name.split(' ')[0].replace(/[^\w]/g, '').replace(/^./, str => str.toUpperCase()) : name,
+            searchName.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase(),
+            searchName.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase().replace(/^./, str => str.toUpperCase()),
+            searchName.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').replace(/^./, str => str.toUpperCase()) + '_' + searchName,
+            searchName.split(' ')[0] ? searchName.split(' ')[0].replace(/[^\w]/g, '').replace(/^./, str => str.toUpperCase()) : searchName,
         ];
         
         let actualFilename = null;
         
         for (let pattern of patterns) {
-            const imagePath = path.join(__dirname, 'public', 'images', topic, `${pattern}.jpg`);
+            const imagePath = path.join(__dirname, 'public', 'images', imageTopicDir, `${pattern}.jpg`);
             if (fs.existsSync(imagePath)) {
                 actualFilename = `${pattern}.jpg`;
                 break;
@@ -94,15 +132,15 @@ function convertToPersonObjects(topic, names) {
         // 디렉토리에서 직접 검색 - 더 정확한 매칭
         if (!actualFilename) {
             try {
-                const imageDir = path.join(__dirname, 'public', 'images', topic);
+                const imageDir = path.join(__dirname, 'public', 'images', imageTopicDir);
                 const files = fs.readdirSync(imageDir);
-                const searchName = name.toLowerCase().replace(/\s+/g, '_');
+                const fileSearchName = searchName.toLowerCase().replace(/\s+/g, '_');
                 
                 actualFilename = files.find(file => {
                     const fileNameLower = file.toLowerCase();
                     // 정확한 매칭만 허용 (부분 매칭 방지)
-                    return fileNameLower.startsWith(searchName) || 
-                           fileNameLower.startsWith(searchName.replace(/_/g, ''));
+                    return fileNameLower.startsWith(fileSearchName) || 
+                           fileNameLower.startsWith(fileSearchName.replace(/_/g, ''));
                 });
             } catch (error) {
                 console.log(`⚠️  파일명을 찾을 수 없습니다: ${name}`);
@@ -118,10 +156,17 @@ function convertToPersonObjects(topic, names) {
             }
         }
         
+        // capitals의 경우 국가 이름 추가
+        let countryName = null;
+        if (topic === 'capitals') {
+            countryName = countryCapitalMapping[name];
+        }
+        
         return {
             name: name,
             koreanName: koreanName,
-            image: `/images/${topic}/${actualFilename || 'placeholder.jpg'}`
+            countryName: countryName,
+            image: `/images/${imageTopicDir}/${actualFilename || 'placeholder.jpg'}`
         };
     });
 }

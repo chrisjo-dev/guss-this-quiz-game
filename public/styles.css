@@ -156,6 +156,20 @@ h1 {
     transform: scale(1.05);
 }
 
+/* 나라 이름 표시 스타일 (Capitals 토픽용) */
+#country-name {
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #4a5568;
+    margin: 15px 0;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #e6fffa, #b2f5ea);
+    border: 2px solid #4fd1c7;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(79, 209, 199, 0.3);
+}
+
 #result-container {
     background: #f7fafc;
     padding: 30px;
