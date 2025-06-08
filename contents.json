@@ -177,16 +177,16 @@
         "Rocket Punch (로켓펀치)", "Cherry Bullet (체리블렛)", "Weki Meki (위키미키)", "fromis_9 (프로미스나인)", "fromis_9 (프로미스나인)"
     ],
     "animals": [
-        "lion", "tiger", "leopard", "cheetah", "jaguar", "puma", "snow leopard", "liger", "black panther", "white tiger",
-        "wolf", "fox", "coyote", "hyena", "jackal", "dingo", "arctic fox", "gray wolf", "Ethiopian wolf", "red wolf",
-        "elephant", "hippopotamus", "giraffe", "zebra", "rhinoceros", "buffalo", "antelope", "gazelle", "impala", "kudu",
-        "kangaroo", "koala", "wombat", "Tasmanian devil", "Asiatic black bear", "polar bear", "panda", "sun bear", "grizzly bear", "black bear",
-        "gorilla", "chimpanzee", "orangutan", "gibbon", "macaque", "crab-eating monkey", "squirrel monkey", "marmoset", "loris", "tamarin",
-        "dolphin", "orca", "sperm whale", "humpback whale", "beluga", "narwhal", "seal", "sea lion", "harbor seal", "sea otter",
-        "penguin", "albatross", "seagull", "eagle", "hawk", "owl", "condor", "stork", "flamingo", "crane",
-        "crocodile", "lizard", "iguana", "chameleon", "cobra", "python", "anaconda", "boa", "turtle", "salamander",
-        "kangaroo rat", "squirrel", "beaver", "otter", "mink", "ferret", "skunk", "raccoon", "meerkat", "prairie dog",
-        "camel", "alpaca", "llama", "reindeer", "deer", "elk", "moose", "antelope", "mountain goat", "yak"
+        "Lion", "Tiger", "Elephant", "Giraffe", "Zebra", "Rhinoceros", "Hippopotamus", "Cheetah", "Leopard", "Panther",
+        "Wolf", "Fox", "Coyote", "Bear", "Grizzly Bear", "Polar Bear", "Panda", "Koala", "Kangaroo", "Wallaby",
+        "Sloth", "Armadillo", "Anteater", "Wombat", "Otter", "Beaver", "Raccoon", "Skunk", "Badger", "Meerkat",
+        "Camel", "Llama", "Alpaca", "Horse", "Donkey", "Mule", "Cow", "Sheep", "Goat", "Pig",
+        "Dog", "Cat", "Rabbit", "Hamster", "Guinea Pig", "Mouse", "Rat", "Squirrel", "Bat", "Hedgehog",
+        "Eagle", "Hawk", "Falcon", "Owl", "Parrot", "Macaw", "Cockatoo", "Canary", "Penguin", "Flamingo",
+        "Peacock", "Swan", "Duck", "Goose", "Turkey", "Chicken", "Rooster", "Pigeon", "Seagull", "Pelican",
+        "Frog", "Toad", "Salamander", "Newt", "Snake", "Python", "Cobra", "Viper", "Iguana", "Lizard",
+        "Chameleon", "Turtle", "Tortoise", "Crocodile", "Alligator", "Shark", "Dolphin", "Whale", "Octopus", "Squid",
+        "Crab", "Lobster", "Jellyfish", "Starfish", "Clownfish", "Goldfish", "Eel", "Seahorse", "Butterfly", "Bee"
     ],
     "flags": [
         "South Korea", "Japan", "China", "United States", "United Kingdom", "France", "Germany", "Italy", "Spain", "Russia",
@@ -199,6 +199,29 @@
         "Afghanistan", "Iran", "Iraq", "Saudi Arabia", "UAE", "Qatar", "Kuwait", "Oman", "Yemen", "Syria",
         "Lebanon", "Israel", "Palestine", "Jordan", "Morocco", "Algeria", "Tunisia", "Libya", "Sudan", "Ethiopia",
         "Kenya", "Tanzania", "Uganda", "Rwanda", "Congo", "Nigeria", "Ghana", "Senegal", "Cameroon", "Ivory Coast"
+    ],
+    "dog_breeds": [
+        "Labrador Retriever", "Golden Retriever", "German Shepherd", "Bulldog", "Poodle",
+        "Beagle", "Rottweiler", "Yorkshire Terrier", "Boxer", "Dachshund",
+        "Siberian Husky", "Doberman Pinscher", "Shih Tzu", "Great Dane", "Pembroke Welsh Corgi",
+        "Miniature Schnauzer", "Cavalier King Charles Spaniel", "Chihuahua", "Pomeranian", "Boston Terrier",
+        "Border Collie", "Havanese", "Shetland Sheepdog", "Brittany Spaniel", "English Springer Spaniel",
+        "Australian Shepherd", "Maltese", "Weimaraner", "Basset Hound", "Akita",
+        "Belgian Malinois", "Saint Bernard", "Alaskan Malamute", "Whippet", "Samoyed",
+        "Newfoundland", "Cane Corso", "Vizsla", "Scottish Terrier", "American Staffordshire Terrier",
+        "Bernese Mountain Dog", "Chinese Crested", "Papillon", "Basenji", "Bull Terrier",
+        "English Cocker Spaniel", "Italian Greyhound", "Lhasa Apso", "Rhodesian Ridgeback", "Norwegian Elkhound",
+        "Chow Chow", "French Bulldog", "Tibetan Terrier", "Saluki", "Jack Russell Terrier",
+        "Australian Cattle Dog", "Irish Setter", "American Eskimo Dog", "Schipperke", "Norfolk Terrier",
+        "Sealyham Terrier", "Glen of Imaal Terrier", "Keeshond", "Norwich Terrier", "Airedale Terrier",
+        "Coton de Tulear", "Bichon Frise", "Brussels Griffon", "Boerboel", "Tosa Inu",
+        "Japanese Chin", "Japanese Spitz", "American Hairless Terrier", "Dogo Argentino", "Thai Ridgeback",
+        "Korean Jindo", "Pharaoh Hound", "Bedlington Terrier", "Manchester Terrier", "Sloughi",
+        "Tibetan Mastiff", "Leonberger", "Old English Sheepdog", "Finnish Spitz", "Kuvasz",
+        "Komondor", "Borzoï", "Russian Toy", "Belgian Tervuren", "Belgian Laekenois",
+        "Belgian Sheepdog", "Clumber Spaniel", "Field Spaniel", "Boykin Spaniel", "Lakeland Terrier",
+        "Plott Hound", "Redbone Coonhound", "Bluetick Coonhound", "Otterhound", "Xoloitzcuintli",
+        "Pekingese", "Neapolitan Mastiff", "Irish Wolfhound", "Afghan Hound", "Greyhound"
     ],
     "capitals": [
         {"capital": "Seoul", "country": "South Korea"}, {"capital": "Tokyo", "country": "Japan"}, 
@@ -251,4 +274,5 @@
         {"capital": "Kinshasa", "country": "Congo"}, {"capital": "Abuja", "country": "Nigeria"},
         {"capital": "Accra", "country": "Ghana"}, {"capital": "Dakar", "country": "Senegal"},
         {"capital": "Yaounde", "country": "Cameroon"}, {"capital": "Yamoussoukro", "country": "Ivory Coast"}
+    ]
 }

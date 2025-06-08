@@ -27,8 +27,10 @@ try {
 const topicMapping: Record<string, string> = {
     'global-celebrities': 'global_celebrities',
     'korean-celebrities': 'korean_celebrities', 
+    'kpop-stars': 'kpop_stars',
     'history': 'historical_figures',
     'animals': 'animals',
+    'dog-breeds': 'dog_breeds',
     'flags': 'flags',
     'capitals': 'capitals'
 };
@@ -60,8 +62,11 @@ function convertToPersonObjects(topic: string, data: any[]): PersonObject[] {
         const name = topic === 'capitals' ? item.capital : item;
         const searchName = topic === 'capitals' ? item.country : name;
         
-        // capitals는 flags 이미지를 사용
-        const imageTopicDir = topic === 'capitals' ? 'flags' : topic;
+        // capitals는 flags 이미지를 사용, history는 historical-figures 폴더 사용, kpop-stars는 kpop-stars 폴더 사용, dog-breeds는 dog-breeds 폴더 사용
+        const imageTopicDir = topic === 'capitals' ? 'flags' : 
+                             topic === 'history' ? 'historical-figures' :
+                             topic === 'kpop-stars' ? 'kpop-stars' :
+                             topic === 'dog-breeds' ? 'dog-breeds' : topic;
         
         if (topic === 'capitals' && !searchName) {
             console.log(`⚠️  수도 ${name}에 대한 국가를 찾을 수 없습니다`);
@@ -69,7 +74,7 @@ function convertToPersonObjects(topic: string, data: any[]): PersonObject[] {
         }
         
         // 여러 파일명 패턴 시도
-        const patterns = [
+        let patterns = [
             // 기본 패턴: jungkook.jpg
             searchName.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase(),
             // 첫글자 대문자 패턴: Jungkook.jpg  
@@ -79,6 +84,17 @@ function convertToPersonObjects(topic: string, data: any[]): PersonObject[] {
             // 영어만 대문자: Jungkook_정국.jpg (영어 부분만)
             searchName.split(' ')[0] ? searchName.split(' ')[0].replace(/[^\w]/g, '').replace(/^./, str => str.toUpperCase()) : searchName,
         ];
+        
+        // K-pop 스타들의 특별한 패턴 처리
+        if (topic === 'kpop-stars') {
+            // "BTS (방탄소년단)" -> "bts_방탄소년단"
+            const match = searchName.match(/^([^(]+)\s*\(([^)]+)\)$/);
+            if (match) {
+                const englishPart = match[1].trim().replace(/\s+/g, '_').toLowerCase();
+                const koreanPart = match[2].trim();
+                patterns.unshift(`${englishPart}_${koreanPart}`);
+            }
+        }
         
         // 각 패턴으로 파일 존재 확인
         for (let pattern of patterns) {
@@ -109,16 +125,30 @@ function convertToPersonObjects(topic: string, data: any[]): PersonObject[] {
         const name = topic === 'capitals' ? item.capital : item;
         const searchName = topic === 'capitals' ? item.country : name;
         
-        // capitals는 flags 이미지를 사용
-        const imageTopicDir = topic === 'capitals' ? 'flags' : topic;
+        // capitals는 flags 이미지를 사용, history는 historical-figures 폴더 사용, kpop-stars는 kpop-stars 폴더 사용, dog-breeds는 dog-breeds 폴더 사용
+        const imageTopicDir = topic === 'capitals' ? 'flags' : 
+                             topic === 'history' ? 'historical-figures' :
+                             topic === 'kpop-stars' ? 'kpop-stars' :
+                             topic === 'dog-breeds' ? 'dog-breeds' : topic;
         
         // 실제 파일명 찾기
-        const patterns = [
+        let patterns = [
             searchName.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase(),
             searchName.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase().replace(/^./, str => str.toUpperCase()),
             searchName.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').replace(/^./, str => str.toUpperCase()) + '_' + searchName,
             searchName.split(' ')[0] ? searchName.split(' ')[0].replace(/[^\w]/g, '').replace(/^./, str => str.toUpperCase()) : searchName,
         ];
+        
+        // K-pop 스타들의 특별한 패턴 처리
+        if (topic === 'kpop-stars') {
+            // "BTS (방탄소년단)" -> "bts_방탄소년단"
+            const match = searchName.match(/^([^(]+)\s*\(([^)]+)\)$/);
+            if (match) {
+                const englishPart = match[1].trim().replace(/\s+/g, '_').toLowerCase();
+                const koreanPart = match[2].trim();
+                patterns.unshift(`${englishPart}_${koreanPart}`);
+            }
+        }
         
         let actualFilename: string | null = null;
         
@@ -148,9 +178,9 @@ function convertToPersonObjects(topic: string, data: any[]): PersonObject[] {
             }
         }
         
-        // Korean celebrities의 경우 한국어 이름 추출
+        // Korean celebrities와 K-pop stars의 경우 한국어 이름 추출
         let koreanName: string | null = null;
-        if (topic === 'korean-celebrities' && actualFilename) {
+        if ((topic === 'korean-celebrities' || topic === 'kpop-stars') && actualFilename) {
             const match = actualFilename.match(/(.+)_(.+)\.jpg$/);
             if (match && match[2]) {
                 koreanName = match[2]; // 파일명에서 한국어 부분 추출

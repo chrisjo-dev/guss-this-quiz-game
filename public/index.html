@@ -17,7 +17,7 @@
                 <span>Time Left: </span>
                 <span id="timer">5</span> seconds
             </div>
-            <button id="exit-btn" onclick="exitGame()">Exit to Main</button>
+            <button id="exit-btn" onclick="exitGame()">Exit</button>
         </div>
 
         <div id="game-area">
@@ -29,7 +29,6 @@
         </div>
 
         <div id="result-container" style="display: none;">
-            <h2 id="result-text">The answer is...</h2>
             <p id="correct-answer"></p>
             <p class="click-hint">Click anywhere to continue to the next question</p>
         </div>
@@ -60,7 +59,9 @@
                     <h3>Choose a topic</h3>
                     <div class="topic-buttons">
                         <button class="topic-btn" onclick="startGame('animals')">Animals</button>
+                        <button class="topic-btn" onclick="startGame('dog-breeds')">Dog Breeds</button>
                         <button class="topic-btn" onclick="startGame('global-celebrities')">Global Stars</button>
+                        <button class="topic-btn" onclick="startGame('kpop-stars')">K-pop Stars</button>
                         <button class="topic-btn" onclick="startGame('history')">Historical Figures</button>
                         <button class="topic-btn" onclick="startGame('korean-celebrities')">Korean Celebrities</button>
                         <button class="topic-btn" onclick="startGame('flags')">Flags</button>

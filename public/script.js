@@ -12,8 +12,10 @@ let usedQuestions = []; // Track used questions
 // Available topics (only those with prepared images)
 const availableTopics = {
     'animals': 'Animals',
+    'dog-breeds': 'Dog Breeds',
     'global-celebrities': 'Global Stars',
-    'history': 'Historical Figures',
+    'kpop-stars': 'K-pop Stars',
+    'historical-figures': 'Historical Figures',
     'korean-celebrities': 'Korean Celebrities',
     'flags': 'Flags',
     'capitals': 'Capitals'
@@ -118,11 +120,11 @@ function loadQuestion() {
     personImage.src = person.image;
     personImage.alt = `${person.name} image`;
     
-    // Add flag-image class for flags and capitals topics
+    // Add flag-image class for flags and capitals topics, korean-celebrity-image for korean celebrities and kpop stars
     personImage.classList.remove('flag-image', 'korean-celebrity-image');
     if (currentTopic === 'flags' || currentTopic === 'capitals') {
         personImage.classList.add('flag-image');
-    } else if (currentTopic === 'korean-celebrities') {
+    } else if (currentTopic === 'korean-celebrities' || currentTopic === 'kpop-stars') {
         personImage.classList.add('korean-celebrity-image');
     }
     
@@ -175,9 +177,9 @@ function showAnswer() {
     timerElement.classList.remove('time-warning', 'time-expired');
     const person = persons[currentQuestion];
     
-    // Show Korean name for Korean celebrities
-    if (currentTopic === 'korean-celebrities' && person.koreanName) {
-        correctAnswerElement.textContent = `${person.name} (${person.koreanName})`;
+    // Show Korean name for Korean celebrities and K-pop stars
+    if ((currentTopic === 'korean-celebrities' || currentTopic === 'kpop-stars') && person.koreanName) {
+        correctAnswerElement.textContent = `${person.name}`;
     } else {
         correctAnswerElement.textContent = person.name;
     }

@@ -60,7 +60,7 @@ body::before {
     background: white;
     border-radius: 20px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    max-width: 600px;
+    max-width: 900px;
     width: 90%;
     padding: 30px;
     text-align: center;
@@ -131,8 +131,8 @@ h1 {
 }
 
 #person-image {
-    width: 350px;
-    height: 350px;
+    width: 600px;
+    height: 600px;
     object-fit: cover;
     border-radius: 15px;
     border: 5px solid #e2e8f0;
@@ -190,7 +190,7 @@ h1 {
 }
 
 #correct-answer {
-    font-size: 1.5em;
+    font-size: 2em;
     color: #805ad5;
     margin-bottom: 20px;
     font-weight: bold;
@@ -473,8 +473,8 @@ h1 {
     }
     
     #person-image {
-        width: 280px;
-        height: 280px;
+        width: 500px;
+        height: 500px;
     }
     
     #result-text {
@@ -482,7 +482,7 @@ h1 {
     }
     
     #correct-answer {
-        font-size: 1.3em;
+        font-size: 1.6em;
     }
     
     .topic-box {
@@ -533,5 +533,22 @@ h1 {
     #exit-btn {
         font-size: 0.8em;
         padding: 6px 12px;
+    }
+}
+
+/* 더 작은 화면용 추가 미디어 쿼리 */
+@media (max-width: 480px) {
+    .container {
+        max-width: 95%;
+        padding: 15px;
+    }
+    
+    #person-image {
+        width: 280px;
+        height: 280px;
+    }
+    
+    #game-logo {
+        width: 150px;
     }
 } 
