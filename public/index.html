@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess This Quiz Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <img id="game-logo" src="logo.png" alt="Guess This Quiz Game" />
+        </div>
+        
+        <div id="game-info">
+            <div class="info-item">
+                <span>Time Left: </span>
+                <span id="timer">5</span> seconds
+            </div>
+            <button id="exit-btn" onclick="exitGame()">🏠 Exit to Main</button>
+        </div>
+
+        <div id="game-area">
+            <div id="person-image-container">
+                <img id="person-image" src="" alt="Quiz image">
+            </div>
+            <p class="click-instruction">💡 Click anywhere to reveal the answer (timer is just for reference)</p>
+        </div>
+
+        <div id="result-container" style="display: none;">
+            <h2 id="result-text">The answer is...</h2>
+            <p id="correct-answer"></p>
+            <p class="click-hint">Click anywhere to continue to the next question</p>
+        </div>
+
+        <div id="start-screen">
+            <p>You have 5 seconds for each question.</p>
+            <p>Look at the image and think about the answer!</p>
+            <p>The answer will appear after 5 seconds.</p>
+            
+            <div class="time-selection">
+                <h3>Set timer: <span id="timer-value">5</span> seconds</h3>
+                <div class="timer-slider-container">
+                    <span class="slider-label">3s</span>
+                    <input type="range" id="timer-slider" min="3" max="30" value="5" step="1" oninput="updateTimer(this.value)">
+                    <span class="slider-label">30s</span>
+                </div>
+                <div class="timer-presets">
+                    <button class="preset-btn" onclick="setTimerValue(3)">3s</button>
+                    <button class="preset-btn" onclick="setTimerValue(5)">5s</button>
+                    <button class="preset-btn" onclick="setTimerValue(10)">10s</button>
+                    <button class="preset-btn" onclick="setTimerValue(15)">15s</button>
+                </div>
+            </div>
+            
+            <div class="topic-selection">
+                <div class="topic-box">
+                    <h3>Choose a topic</h3>
+                    <div class="topic-buttons">
+                        <button class="topic-btn" onclick="startGame('animals')">🐯 Animals</button>
+                        <button class="topic-btn" onclick="startGame('global-celebrities')">🌟 Global Stars</button>
+                        <button class="topic-btn" onclick="startGame('history')">📚 Historical Figures</button>
+                        <button class="topic-btn" onclick="startGame('korean-celebrities')">🎤 Korean Celebrities</button>
+                        <button class="topic-btn" onclick="startGame('flags')">🏳️ Flags</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-over" style="display: none;">
+            <h2>Game Over!</h2>
+            <p>You've seen all the items! 🎉</p>
+            <button onclick="resetGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

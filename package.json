@@ -1,0 +1,20 @@
+{
+  "name": "guess-this-person",
+  "version": "1.0.0",
+  "description": "A 5-second person guessing quiz game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "build": "npm run build"
+  },
+  "keywords": ["quiz", "game", "person", "guessing"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+} 
