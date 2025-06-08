@@ -36,23 +36,92 @@ const topicMapping = {
 // 문자열 배열을 이미지 경로가 포함된 인물 객체로 변환 (이미지가 있는 경우만)
 function convertToPersonObjects(topic, names) {
     return names.filter(name => {
-        // 파일 이름에 안전한 문자열 생성
-        const filename = name.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase();
-        const imagePath = path.join(__dirname, 'public', 'images', topic, `${filename}.jpg`);
+        // 여러 파일명 패턴 시도
+        const patterns = [
+            // 기본 패턴: jungkook.jpg
+            name.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase(),
+            // 첫글자 대문자 패턴: Jungkook.jpg  
+            name.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase().replace(/^./, str => str.toUpperCase()),
+            // 한영 조합 패턴: Jungkook_정국.jpg
+            name.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').replace(/^./, str => str.toUpperCase()) + '_' + name,
+            // 영어만 대문자: Jungkook_정국.jpg (영어 부분만)
+            name.split(' ')[0] ? name.split(' ')[0].replace(/[^\w]/g, '').replace(/^./, str => str.toUpperCase()) : name,
+        ];
         
-        // 이미지 파일 존재 여부 확인
+        // 각 패턴으로 파일 존재 확인
+        for (let pattern of patterns) {
+            const imagePath = path.join(__dirname, 'public', 'images', topic, `${pattern}.jpg`);
+            if (fs.existsSync(imagePath)) {
+                return true;
+            }
+        }
+        
+        // 실제 디렉토리에서 파일 검색 (마지막 수단) - 더 정확한 매칭
         try {
-            return fs.existsSync(imagePath);
+            const imageDir = path.join(__dirname, 'public', 'images', topic);
+            const files = fs.readdirSync(imageDir);
+            const searchName = name.toLowerCase().replace(/\s+/g, '_');
+            
+            return files.some(file => {
+                const fileNameLower = file.toLowerCase();
+                // 정확한 매칭만 허용 (부분 매칭 방지)
+                return fileNameLower.startsWith(searchName) || 
+                       fileNameLower.startsWith(searchName.replace(/_/g, ''));
+            });
         } catch (error) {
-            console.log(`⚠️  이미지를 찾을 수 없습니다: ${name} (${filename}.jpg)`);
+            console.log(`⚠️  이미지를 찾을 수 없습니다: ${name}`);
             return false;
         }
     }).map(name => {
-        // 파일 이름에 안전한 문자열 생성
-        const filename = name.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase();
+        // 실제 파일명 찾기
+        const patterns = [
+            name.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase(),
+            name.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').toLowerCase().replace(/^./, str => str.toUpperCase()),
+            name.replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '_').replace(/^./, str => str.toUpperCase()) + '_' + name,
+            name.split(' ')[0] ? name.split(' ')[0].replace(/[^\w]/g, '').replace(/^./, str => str.toUpperCase()) : name,
+        ];
+        
+        let actualFilename = null;
+        
+        for (let pattern of patterns) {
+            const imagePath = path.join(__dirname, 'public', 'images', topic, `${pattern}.jpg`);
+            if (fs.existsSync(imagePath)) {
+                actualFilename = `${pattern}.jpg`;
+                break;
+            }
+        }
+        
+        // 디렉토리에서 직접 검색 - 더 정확한 매칭
+        if (!actualFilename) {
+            try {
+                const imageDir = path.join(__dirname, 'public', 'images', topic);
+                const files = fs.readdirSync(imageDir);
+                const searchName = name.toLowerCase().replace(/\s+/g, '_');
+                
+                actualFilename = files.find(file => {
+                    const fileNameLower = file.toLowerCase();
+                    // 정확한 매칭만 허용 (부분 매칭 방지)
+                    return fileNameLower.startsWith(searchName) || 
+                           fileNameLower.startsWith(searchName.replace(/_/g, ''));
+                });
+            } catch (error) {
+                console.log(`⚠️  파일명을 찾을 수 없습니다: ${name}`);
+            }
+        }
+        
+        // Korean celebrities의 경우 한국어 이름 추출
+        let koreanName = null;
+        if (topic === 'korean-celebrities' && actualFilename) {
+            const match = actualFilename.match(/(.+)_(.+)\.jpg$/);
+            if (match && match[2]) {
+                koreanName = match[2]; // 파일명에서 한국어 부분 추출
+            }
+        }
+        
         return {
             name: name,
-            image: `/images/${topic}/${filename}.jpg`
+            koreanName: koreanName,
+            image: `/images/${topic}/${actualFilename || 'placeholder.jpg'}`
         };
     });
 }
