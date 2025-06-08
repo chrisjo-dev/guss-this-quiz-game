@@ -2,15 +2,20 @@
   "name": "guess-this-person",
   "version": "1.0.0",
   "description": "A 5-second person guessing quiz game",
-  "main": "server.js",
+  "main": "index.ts",
   "scripts": {
-    "start": "node server.js",
+    "start": "bun run index.ts",
     "dev": "nodemon server.js",
     "dev:bun": "bun run index.ts --watch",
     "start:bun": "bun run index.ts",
     "build": "echo 'No build step required for this project'"
   },
-  "keywords": ["quiz", "game", "person", "guessing"],
+  "keywords": [
+    "quiz",
+    "game",
+    "person",
+    "guessing"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
