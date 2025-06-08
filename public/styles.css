@@ -534,6 +534,20 @@ h1 {
         font-size: 0.8em;
         padding: 6px 12px;
     }
+    
+    .timer-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .auto-next-compact {
+        align-self: flex-start;
+    }
+    
+    .compact-label {
+        font-size: 0.9em;
+    }
 }
 
 /* 더 작은 화면용 추가 미디어 쿼리 */
@@ -604,4 +618,86 @@ h1 {
     font-size: 0.9em;
     color: #718096;
     opacity: 0.8;
+}
+
+/* Timer header with compact auto-next */
+.timer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.auto-next-compact {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.compact-label {
+    color: #4a5568;
+    font-size: 1em;
+    font-weight: 500;
+    user-select: none;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+    cursor: pointer;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ccc;
+    transition: 0.3s;
+    border-radius: 28px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    transition: 0.3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    box-shadow: inset 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+}
+
+.toggle-switch:hover .toggle-slider {
+    opacity: 0.9;
+}
+
+.toggle-label {
+    color: #4a5568;
+    font-size: 1em;
+    font-weight: 500;
+    user-select: none;
 }

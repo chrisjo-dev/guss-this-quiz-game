@@ -3,11 +3,13 @@ let currentQuestion = 0;
 let timeLeft = 5;
 let defaultTime = 5; // Default timer setting
 let questionTimer;
+let autoNextTimer;
 let gameActive = false;
 let waitingForClick = false;
 let currentTopic = 'global-celebrities';
 let persons = [];
 let usedQuestions = []; // Track used questions
+let autoNextEnabled = true; // Auto-advance on timer expiry
 
 // Available topics (only those with prepared images)
 const availableTopics = {
@@ -196,9 +198,19 @@ function startTimer() {
         
         if (timeLeft <= 0) {
             clearInterval(questionTimer);
-            // Don't auto-show answer when timer expires
             timerElement.textContent = "0";
             timerElement.classList.add('time-expired');
+            
+            // Auto-advance if enabled
+            if (autoNextEnabled && !waitingForClick) {
+                showAnswer();
+                // Auto-proceed to next question after 2 seconds
+                autoNextTimer = setTimeout(() => {
+                    if (waitingForClick) {
+                        nextQuestion();
+                    }
+                }, 2000);
+            }
         }
     }, 1000);
 }
@@ -210,6 +222,11 @@ function updateTimerDisplay() {
 
 // Show answer function
 function showAnswer() {
+    // Clear any existing question timer
+    if (questionTimer) {
+        clearInterval(questionTimer);
+    }
+    
     timerElement.classList.remove('time-warning', 'time-expired');
     const person = persons[currentQuestion];
     
@@ -230,6 +247,12 @@ function showAnswer() {
 // Next question function
 function nextQuestion() {
     if (!waitingForClick) return;
+    
+    // Clear auto-next timer if it exists
+    if (autoNextTimer) {
+        clearTimeout(autoNextTimer);
+        autoNextTimer = null;
+    }
     
     resultContainer.style.display = 'none';
     gameArea.classList.remove('clickable');
@@ -258,9 +281,13 @@ function resetGame() {
     waitingForClick = false;
     usedQuestions = []; // Reset used questions list
     
-    // Clear timer
+    // Clear timers
     if (questionTimer) {
         clearInterval(questionTimer);
+    }
+    if (autoNextTimer) {
+        clearTimeout(autoNextTimer);
+        autoNextTimer = null;
     }
     
     // Reset UI
@@ -277,11 +304,15 @@ personImage.addEventListener('error', function() {
 
 // Click event handling
 document.addEventListener('click', function(event) {
-    // Exclude topic buttons, preset buttons, slider, exit button and reset buttons
+    // Exclude topic buttons, preset buttons, slider, exit button, reset buttons, and toggle switch
     if (event.target.classList.contains('topic-btn') || 
         event.target.classList.contains('preset-btn') ||
         event.target.classList.contains('time-btn') ||
         event.target.id === 'timer-slider' ||
+        event.target.id === 'auto-next-toggle' ||
+        event.target.classList.contains('toggle-slider') ||
+        event.target.classList.contains('compact-label') ||
+        event.target.closest('.toggle-switch') ||
         event.target.textContent === 'Play Again' ||
         event.target.id === 'start-btn' ||
         event.target.id === 'exit-btn') {
@@ -302,9 +333,13 @@ document.addEventListener('click', function(event) {
 
 // Exit game function
 function exitGame() {
-    // Clear any running timer
+    // Clear any running timers
     if (questionTimer) {
         clearInterval(questionTimer);
+    }
+    if (autoNextTimer) {
+        clearTimeout(autoNextTimer);
+        autoNextTimer = null;
     }
     
     // Reset game state
@@ -375,6 +410,12 @@ function hideLoadingIndicator() {
     }
 }
 
+// Toggle auto-next setting
+function toggleAutoNext() {
+    const toggle = document.getElementById('auto-next-toggle');
+    autoNextEnabled = toggle.checked;
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     // Set initial state
@@ -382,4 +423,12 @@ document.addEventListener('DOMContentLoaded', function() {
     gameInfo.style.display = 'none';
     gameOver.style.display = 'none';
     resultContainer.style.display = 'none';
+    
+    // Add event listener for auto-next toggle
+    const autoNextToggle = document.getElementById('auto-next-toggle');
+    if (autoNextToggle) {
+        autoNextToggle.addEventListener('change', toggleAutoNext);
+        // Set initial state
+        autoNextEnabled = autoNextToggle.checked;
+    }
 }); 

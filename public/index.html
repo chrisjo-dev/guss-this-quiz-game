@@ -39,7 +39,16 @@
             <p>The answer will appear after 5 seconds.</p>
             
             <div class="time-selection">
-                <h3>Set timer: <span id="timer-value">5</span> seconds</h3>
+                <div class="timer-header">
+                    <h3>Set timer: <span id="timer-value">5</span> seconds</h3>
+                    <div class="auto-next-compact">
+                        <span class="compact-label">Auto-advance</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="auto-next-toggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
                 <div class="timer-slider-container">
                     <span class="slider-label">2s</span>
                     <input type="range" id="timer-slider" min="2" max="30" value="5" step="1" oninput="updateTimer(this.value)">
