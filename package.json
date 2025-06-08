@@ -8,7 +8,7 @@
     "dev": "nodemon server.js",
     "dev:bun": "bun run index.ts --watch",
     "start:bun": "bun run index.ts",
-    "build": "npm run build"
+    "build": "echo 'No build step required for this project'"
   },
   "keywords": ["quiz", "game", "person", "guessing"],
   "author": "",
