@@ -7,11 +7,12 @@ let gameActive = false;
 let waitingForClick = false;
 let currentTopic = 'global-celebrities';
 let persons = [];
+let usedQuestions = []; // Track used questions
 
 // Available topics (only those with prepared images)
 const availableTopics = {
     'animals': 'Animals',
-    'global-celebrities': 'Global Stars',
+    'global-celebrities': 'Global Stars', 
     'history': 'Historical Figures',
     'korean-celebrities': 'Korean Celebrities',
     'flags': 'Flags'
@@ -42,13 +43,11 @@ async function startGame(topic = null) {
         startScreen.style.display = 'none';
         gameArea.style.display = 'block';
         gameInfo.style.display = 'flex';
-        logoContainer.style.display = 'none'; // 게임 중에는 로고 숨기기
+        logoContainer.style.display = 'none'; // Hide logo during game
         gameActive = true;
         currentQuestion = 0;
         waitingForClick = false;
-        
-        // Shuffle array for random order
-        shuffleArray(persons);
+        usedQuestions = []; // Reset used questions list
         
         loadQuestion();
     } catch (error) {
@@ -77,28 +76,47 @@ async function loadPersonsData(topic) {
     }
 }
 
-// 배열 섞기 함수
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-}
+// Array shuffle function removed - now using random selection
 
-// 문제 로드 함수
+// Load question function (prevent duplicates)
 function loadQuestion() {
-    if (currentQuestion >= persons.length) {
+    // End game if all questions have been used
+    if (usedQuestions.length >= persons.length) {
         endGame();
         return;
     }
 
+    let randomIndex;
+    let attempts = 0;
+    const maxAttempts = persons.length * 2; // Prevent infinite loop
+    
+    // Select random unused question
+    do {
+        randomIndex = Math.floor(Math.random() * persons.length);
+        attempts++;
+    } while (usedQuestions.includes(randomIndex) && attempts < maxAttempts);
+    
+    // If no unused question found, select first available unused one
+    if (usedQuestions.includes(randomIndex)) {
+        for (let i = 0; i < persons.length; i++) {
+            if (!usedQuestions.includes(i)) {
+                randomIndex = i;
+                break;
+            }
+        }
+    }
+    
+    // Add to used questions list
+    usedQuestions.push(randomIndex);
+    currentQuestion = randomIndex;
+    
     const person = persons[currentQuestion];
     
     // Set image
     personImage.src = person.image;
     personImage.alt = `${person.name} image`;
     
-    // 국기 토픽인 경우 flag-image 클래스 추가
+    // Add flag-image class for flags topic
     personImage.classList.remove('flag-image', 'korean-celebrity-image');
     if (currentTopic === 'flags') {
         personImage.classList.add('flag-image');
@@ -115,7 +133,7 @@ function loadQuestion() {
     startTimer();
 }
 
-// 타이머 시작 함수 (장식용)
+// Start timer function (decorative)
 function startTimer() {
     timeLeft = defaultTime;
     updateTimerDisplay();
@@ -130,24 +148,30 @@ function startTimer() {
         
         if (timeLeft <= 0) {
             clearInterval(questionTimer);
-            // 타이머가 끝나도 정답을 자동으로 보여주지 않음
+            // Don't auto-show answer when timer expires
             timerElement.textContent = "0";
             timerElement.classList.add('time-expired');
         }
     }, 1000);
 }
 
-// 타이머 업데이트 함수
+// Update timer display function
 function updateTimerDisplay() {
     timerElement.textContent = timeLeft;
 }
 
-// 정답 표시 함수
+// Show answer function
 function showAnswer() {
     timerElement.classList.remove('time-warning', 'time-expired');
     const person = persons[currentQuestion];
     
-    correctAnswerElement.textContent = person.name;
+    // Show Korean name for Korean celebrities
+    if (currentTopic === 'korean-celebrities' && person.koreanName) {
+        correctAnswerElement.textContent = `${person.name} (${person.koreanName})`;
+    } else {
+        correctAnswerElement.textContent = person.name;
+    }
+    
     resultContainer.style.display = 'block';
     clickInstruction.style.display = 'none';
     
@@ -155,17 +179,16 @@ function showAnswer() {
     gameArea.classList.add('clickable');
 }
 
-// 다음 문제 함수
+// Next question function
 function nextQuestion() {
     if (!waitingForClick) return;
     
     resultContainer.style.display = 'none';
     gameArea.classList.remove('clickable');
-    currentQuestion++;
-    loadQuestion();
+    loadQuestion(); // Load new random question
 }
 
-// 게임 종료 함수
+// End game function
 function endGame() {
     gameActive = false;
     gameArea.style.display = 'none';
@@ -173,25 +196,26 @@ function endGame() {
     gameOver.style.display = 'block';
 }
 
-// 게임 리셋 함수
+// Reset game function
 function resetGame() {
     gameOver.style.display = 'none';
     resultContainer.style.display = 'none';
     startScreen.style.display = 'block';
-    logoContainer.style.display = 'block'; // 메인화면에서는 로고 보이기
+    logoContainer.style.display = 'block'; // Show logo on main screen
     
-    // 게임 상태 초기화
+    // Reset game state
     currentQuestion = 0;
     timeLeft = defaultTime;
     gameActive = false;
     waitingForClick = false;
+    usedQuestions = []; // Reset used questions list
     
-    // 타이머 정리
+    // Clear timer
     if (questionTimer) {
         clearInterval(questionTimer);
     }
     
-    // UI 초기화
+    // Reset UI
     timerElement.classList.remove('time-warning', 'time-expired');
     updateTimerDisplay();
     gameArea.classList.remove('clickable');
@@ -239,6 +263,7 @@ function exitGame() {
     gameActive = false;
     waitingForClick = false;
     currentQuestion = 0;
+    usedQuestions = []; // Reset used questions list
     
     // Hide game screens and show start screen
     gameArea.style.display = 'none';
@@ -246,7 +271,7 @@ function exitGame() {
     resultContainer.style.display = 'none';
     gameOver.style.display = 'none';
     startScreen.style.display = 'block';
-    logoContainer.style.display = 'block'; // 메인화면에서는 로고 보이기
+    logoContainer.style.display = 'block'; // Show logo on main screen
     
     // Reset UI elements
     timerElement.classList.remove('time-warning', 'time-expired');
@@ -276,9 +301,9 @@ function setTime(seconds) {
     setTimerValue(seconds);
 }
 
-// 페이지 로드 시 초기화
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // 초기 상태 설정
+    // Set initial state
     gameArea.style.display = 'none';
     gameInfo.style.display = 'none';
     gameOver.style.display = 'none';
