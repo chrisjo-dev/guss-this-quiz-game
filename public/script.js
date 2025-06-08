@@ -27,6 +27,7 @@ const personImage = document.getElementById('person-image');
 const timerElement = document.getElementById('timer');
 const correctAnswerElement = document.getElementById('correct-answer');
 const clickInstruction = document.querySelector('.click-instruction');
+const logoContainer = document.querySelector('.logo-container');
 
 // Game start function
 async function startGame(topic = null) {
@@ -41,6 +42,7 @@ async function startGame(topic = null) {
         startScreen.style.display = 'none';
         gameArea.style.display = 'block';
         gameInfo.style.display = 'flex';
+        logoContainer.style.display = 'none'; // 게임 중에는 로고 숨기기
         gameActive = true;
         currentQuestion = 0;
         waitingForClick = false;
@@ -97,9 +99,11 @@ function loadQuestion() {
     personImage.alt = `${person.name} image`;
     
     // 국기 토픽인 경우 flag-image 클래스 추가
-    personImage.classList.remove('flag-image');
+    personImage.classList.remove('flag-image', 'korean-celebrity-image');
     if (currentTopic === 'flags') {
         personImage.classList.add('flag-image');
+    } else if (currentTopic === 'korean-celebrities') {
+        personImage.classList.add('korean-celebrity-image');
     }
     
     // Hide result container and show click instruction
@@ -174,6 +178,7 @@ function resetGame() {
     gameOver.style.display = 'none';
     resultContainer.style.display = 'none';
     startScreen.style.display = 'block';
+    logoContainer.style.display = 'block'; // 메인화면에서는 로고 보이기
     
     // 게임 상태 초기화
     currentQuestion = 0;
@@ -241,6 +246,7 @@ function exitGame() {
     resultContainer.style.display = 'none';
     gameOver.style.display = 'none';
     startScreen.style.display = 'block';
+    logoContainer.style.display = 'block'; // 메인화면에서는 로고 보이기
     
     // Reset UI elements
     timerElement.classList.remove('time-warning', 'time-expired');
