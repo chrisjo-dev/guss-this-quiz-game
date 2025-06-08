@@ -4,7 +4,7 @@
   "description": "A 5-second person guessing quiz game",
   "main": "index.ts",
   "scripts": {
-    "start": "bun run index.ts",
+    "start": "ts-node index.ts",
     "dev": "nodemon server.js",
     "dev:bun": "bun run index.ts --watch",
     "start:bun": "bun run index.ts",
@@ -19,11 +19,17 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/node": "^22.15.30",
     "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
   }
 }
