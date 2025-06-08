@@ -34,15 +34,54 @@ const clickInstruction = document.querySelector('.click-instruction');
 const logoContainer = document.querySelector('.logo-container');
 const countryNameElement = document.getElementById('country-name');
 
+// Image preloading variables
+let preloadedImages = new Map();
+let isPreloading = false;
+
+// Preload all images for a topic
+function preloadImages(topic, persons) {
+    return new Promise((resolve) => {
+        if (preloadedImages.has(topic)) {
+            resolve();
+            return;
+        }
+        
+        isPreloading = true;
+        
+        const imagePromises = persons.map((person) => {
+            return new Promise((resolveImage) => {
+                const img = new Image();
+                img.onload = () => resolveImage();
+                img.onerror = () => resolveImage();
+                img.src = person.image;
+            });
+        });
+        
+        Promise.all(imagePromises).then(() => {
+            preloadedImages.set(topic, true);
+            isPreloading = false;
+            resolve();
+        });
+    });
+}
+
 // Game start function
 async function startGame(topic = null) {
     if (topic) {
         currentTopic = topic;
     }
     
+    // Show loading indicator
+    showLoadingIndicator();
+    
     // Load data
     try {
         await loadPersonsData(currentTopic);
+        
+        // Preload all images for better performance
+        await preloadImages(currentTopic, persons);
+        
+        hideLoadingIndicator();
         
         startScreen.style.display = 'none';
         gameArea.style.display = 'block';
@@ -55,7 +94,7 @@ async function startGame(topic = null) {
         
         loadQuestion();
     } catch (error) {
-        console.error('Error starting game:', error);
+        hideLoadingIndicator();
         alert('An error occurred while loading game data.');
     }
 }
@@ -72,10 +111,7 @@ async function loadPersonsData(topic) {
         if (persons.length === 0) {
             throw new Error('No data available.');
         }
-        
-        console.log(`✅ ${availableTopics[topic]} data loaded successfully:`, persons.length, 'items');
     } catch (error) {
-        console.error('Data loading failed:', error);
         throw error;
     }
 }
@@ -311,6 +347,32 @@ function setTimerValue(seconds) {
 // Legacy function for compatibility (deprecated)
 function setTime(seconds) {
     setTimerValue(seconds);
+}
+
+// Loading indicator functions
+function showLoadingIndicator() {
+    // Create loading overlay if it doesn't exist
+    let loadingOverlay = document.getElementById('loading-overlay');
+    if (!loadingOverlay) {
+        loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'loading-overlay';
+        loadingOverlay.innerHTML = `
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Loading images...</div>
+                <div class="loading-progress">This may take a few seconds</div>
+            </div>
+        `;
+        document.body.appendChild(loadingOverlay);
+    }
+    loadingOverlay.style.display = 'flex';
+}
+
+function hideLoadingIndicator() {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
 }
 
 // Initialize on page load
