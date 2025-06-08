@@ -2,17 +2,58 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    user-select: none; /* 텍스트 선택 방지 */
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE/Edge */
+}
+
+html {
+    /* 강력한 배경 고정 - 바운스 영역까지 커버 */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-attachment: fixed;
+    background-size: cover;
+    background-repeat: no-repeat;
+    -webkit-overflow-scrolling: touch;
+    height: 100%;
+    min-height: 100vh;
+    /* 바운스 영역까지 배경 확장 */
+    position: relative;
 }
 
 body {
     font-family: 'Arial', sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-attachment: fixed;
+    background-size: cover;
+    background-repeat: no-repeat;
     min-height: 100vh;
+    min-height: 100svh; /* 새로운 viewport 단위 */
     display: flex;
     justify-content: center;
     align-items: center;
     color: #333;
     cursor: pointer;
+    /* 가로 스크롤만 제거 */
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    /* iOS 바운스 영역에 대한 추가 보장 */
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+/* iOS 바운스 영역을 위한 추가 배경 레이어 */
+body::before {
+    content: '';
+    position: fixed;
+    top: -100vh;
+    left: 0;
+    right: 0;
+    bottom: -100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    z-index: -1;
+    pointer-events: none;
 }
 
 .container {
@@ -101,6 +142,12 @@ h1 {
 
 /* 국기 이미지는 전체 보이도록 설정 */
 #person-image.flag-image {
+    object-fit: contain;
+    background-color: #f7fafc;
+}
+
+/* Korean celebrities 이미지도 전체 보이도록 설정 */
+#person-image.korean-celebrity-image {
     object-fit: contain;
     background-color: #f7fafc;
 }
