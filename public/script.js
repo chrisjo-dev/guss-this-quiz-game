@@ -40,7 +40,50 @@ const countryNameElement = document.getElementById('country-name');
 let preloadedImages = new Map();
 let isPreloading = false;
 
-// Preload all images for a topic
+// WebP 지원 확인
+function supportsWebP() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+}
+
+const isWebPSupported = supportsWebP();
+
+// 이미지 URL을 최적화된 형식으로 변환
+function getOptimizedImageUrl(originalUrl) {
+    if (isWebPSupported) {
+        return originalUrl.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+    }
+    return originalUrl;
+}
+
+// Progressive image loading with WebP support
+function loadImageWithFallback(src, fallbackSrc = null) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        
+        // WebP 지원 시 WebP 이미지 먼저 시도
+        const webpSrc = getOptimizedImageUrl(src);
+        
+        img.onload = () => resolve(img);
+        img.onerror = () => {
+            // WebP 실패 시 원본 이미지로 fallback
+            if (webpSrc !== src) {
+                const fallbackImg = new Image();
+                fallbackImg.onload = () => resolve(fallbackImg);
+                fallbackImg.onerror = () => reject(new Error('Image loading failed'));
+                fallbackImg.src = fallbackSrc || src;
+            } else {
+                reject(new Error('Image loading failed'));
+            }
+        };
+        
+        img.src = webpSrc;
+    });
+}
+
+// Preload all images for a topic with batching
 function preloadImages(topic, persons) {
     return new Promise((resolve) => {
         if (preloadedImages.has(topic)) {
@@ -50,16 +93,34 @@ function preloadImages(topic, persons) {
         
         isPreloading = true;
         
-        const imagePromises = persons.map((person) => {
-            return new Promise((resolveImage) => {
-                const img = new Image();
-                img.onload = () => resolveImage();
-                img.onerror = () => resolveImage();
-                img.src = person.image;
-            });
-        });
+        // 배치 처리로 동시 로딩 제한 (네트워크 과부하 방지)
+        const BATCH_SIZE = 5;
+        let loadedCount = 0;
         
-        Promise.all(imagePromises).then(() => {
+        const loadBatch = (startIndex) => {
+            const batch = persons.slice(startIndex, startIndex + BATCH_SIZE);
+            const batchPromises = batch.map((person) => {
+                return loadImageWithFallback(person.image)
+                    .then(() => {
+                        loadedCount++;
+                        // 진행률 표시
+                        const progress = Math.round((loadedCount / persons.length) * 100);
+                        updateLoadingProgress(progress);
+                    })
+                    .catch(() => {
+                        loadedCount++;
+                        console.warn(`Failed to load image: ${person.image}`);
+                    });
+            });
+            
+            return Promise.all(batchPromises).then(() => {
+                if (startIndex + BATCH_SIZE < persons.length) {
+                    return loadBatch(startIndex + BATCH_SIZE);
+                }
+            });
+        };
+        
+        loadBatch(0).then(() => {
             preloadedImages.set(topic, true);
             isPreloading = false;
             resolve();
@@ -154,9 +215,13 @@ function loadQuestion() {
     
     const person = persons[currentQuestion];
     
-    // Set image
-    personImage.src = person.image;
+    // Set image with optimized loading
+    const optimizedImageUrl = getOptimizedImageUrl(person.image);
+    personImage.src = optimizedImageUrl;
     personImage.alt = `${person.name} image`;
+    
+    // Add loading attribute for better performance
+    personImage.loading = 'eager';
     
     // Add flag-image class for flags and capitals topics, korean-celebrity-image for korean celebrities and kpop stars
     personImage.classList.remove('flag-image', 'korean-celebrity-image');
@@ -395,12 +460,27 @@ function showLoadingIndicator() {
             <div class="loading-content">
                 <div class="loading-spinner"></div>
                 <div class="loading-text">Loading images...</div>
-                <div class="loading-progress">This may take a few seconds</div>
+                <div class="loading-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="loading-progress"></div>
+                    </div>
+                    <span class="progress-text" id="progress-text">0%</span>
+                </div>
             </div>
         `;
         document.body.appendChild(loadingOverlay);
     }
     loadingOverlay.style.display = 'flex';
+}
+
+function updateLoadingProgress(progress) {
+    const progressFill = document.getElementById('loading-progress');
+    const progressText = document.getElementById('progress-text');
+    
+    if (progressFill && progressText) {
+        progressFill.style.width = `${progress}%`;
+        progressText.textContent = `${progress}%`;
+    }
 }
 
 function hideLoadingIndicator() {
@@ -415,6 +495,8 @@ function toggleAutoNext() {
     const toggle = document.getElementById('auto-next-toggle');
     autoNextEnabled = toggle.checked;
 }
+
+
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {

@@ -54,13 +54,41 @@ Test your knowledge with this fun image-based quiz game!
 
 ## Getting Started
 
+1. **Install dependencies:**
 ```bash
-# Fire up the server
-bun run dev:bun
+npm install
+```
 
-# Jump into the game
+2. **Optimize images for fast loading (Recommended):**
+```bash
+npm run optimize-images
+```
+This command converts all images to WebP format and compresses them for significantly faster loading.
+
+3. **Fire up the server:**
+```bash
+bun run dev:bun
+```
+
+4. **Jump into the game:**
+```bash
 http://localhost:3000
 ```
+
+## 🚀 Performance Optimizations
+
+### Image Loading Speed Improvements
+- **WebP Support**: Automatically uses WebP images when supported (60-80% size reduction)
+- **Image Compression**: High-quality compression using Sharp library
+- **Batch Loading**: Prevents network overload with batch-wise image preloading
+- **Progress Indicator**: Visual loading progress for better user experience
+- **gzip Compression**: Server-level compression for all resources
+- **Browser Caching**: Aggressive caching for images and static files
+
+### Slow Internet Support
+- **Fallback Mechanism**: Automatic fallback to original images if WebP fails
+- **Progressive Loading**: Priority loading for essential images first
+- **Offline Handling**: Placeholder images for failed loads
 
 ## Key Features
 

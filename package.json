@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "dev:bun": "bun run index.ts --watch",
     "start:bun": "bun run index.ts",
-    "build": "echo 'No build step required for this project'"
+    "build": "echo 'No build step required for this project'",
+    "optimize-images": "node scripts/optimize-images.js"
   },
   "keywords": [
     "quiz",
@@ -21,11 +22,14 @@
   "dependencies": {
     "express": "^5.1.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "sharp": "^0.33.2",
+    "compression": "^1.7.4"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/node": "^22.15.30",
+    "@types/compression": "^1.7.5",
     "nodemon": "^3.0.1"
   },
   "engines": {
