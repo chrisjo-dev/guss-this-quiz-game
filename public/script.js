@@ -3,7 +3,8 @@ const GAME_SETTINGS = {
     DEFAULT_TIME: 5,
     DEFAULT_TOPIC: 'global-celebrities',
     AUTO_NEXT_DELAY: 2000,
-    TIMER_WARNING_THRESHOLD: 2
+    TIMER_WARNING_THRESHOLD: 2,
+    STACK_SIZE: 20  // 스택에 유지할 이미지 수
 };
 
 const TOPICS = {
@@ -39,8 +40,12 @@ let gameState = {
     waitingForClick: false,
     currentTopic: TOPICS.GLOBAL_CELEBRITIES,
     persons: [],
+    imageStack: [],  // 이미지 스택
     usedQuestions: [],
-    autoNextEnabled: true
+    autoNextEnabled: true,
+    currentBatchIndex: 0,  // 현재 배치 인덱스
+    totalQuestions: 0,     // 전체 문제 수
+    questionsAnswered: 0   // 답변한 문제 수 (중복 방지용)
 };
 
 // DOM elements
@@ -118,65 +123,197 @@ async function startGame(topic = null) {
     }
 }
 
+// 이미지 스택 관련 함수들
+async function preloadImageStack(persons) {
+    const stackPromises = persons.map(person => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous'; // CORS 설정
+            
+            img.onload = () => {
+                // 이미지를 캔버스로 변환한 후 blob URL 생성
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                
+                canvas.toBlob((blob) => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    gameState.imageStack.push({
+                        blobUrl: blobUrl,
+                        person: person,
+                        originalUrl: person.image
+                    });
+                    resolve();
+                });
+            };
+            
+            img.onerror = () => {
+                // 에러 시 기본 이미지를 blob URL로 변환
+                const defaultImageData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzUwIiBoZWlnaHQ9IjM1MCIgdmlld0JveD0iMCAwIDM1MCAzNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzNTAiIGhlaWdodD0iMzUwIiBmaWxsPSIjRjdGQUZDIi8+CjxjaXJjbGUgY3g9IjE3NSIgY3k9IjE0MCIgcj0iNDAiIGZpbGw9IiNFMkU4RjAiLz4KPHBhdGggZD0iTTEwMCAyODBDNTAgMjIwIDEyMCAyMDAgMjMwIDIyMEM1MCAyMzAgMzAwIDI0MCAyNTAgMjgwSDEwMFoiIGZpbGw9IiNFMkU4RjAiLz4KPHN2Zz4=';
+                
+                fetch(defaultImageData)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const blobUrl = URL.createObjectURL(blob);
+                        gameState.imageStack.push({
+                            blobUrl: blobUrl,
+                            person: person,
+                            originalUrl: person.image
+                        });
+                        resolve();
+                    })
+                    .catch(() => {
+                        // fetch도 실패하면 원본 URL로 대체
+                        gameState.imageStack.push({
+                            blobUrl: person.image,
+                            person: person,
+                            originalUrl: person.image
+                        });
+                        resolve();
+                    });
+            };
+            
+            img.src = person.image;
+        });
+    });
+
+    const updateInterval = setInterval(() => {
+        const progress = Math.round((gameState.imageStack.length / persons.length) * 100);
+        updateLoadingProgress(progress);
+    }, 100);
+
+    await Promise.all(stackPromises);
+    clearInterval(updateInterval);
+    updateLoadingProgress(100);
+    
+    console.log('Preloaded batch:', persons.length, 'Total in stack:', gameState.imageStack.length);
+}
+
+async function loadNextBatch() {
+    const startIndex = gameState.currentBatchIndex * GAME_SETTINGS.STACK_SIZE;
+    const endIndex = Math.min(startIndex + GAME_SETTINGS.STACK_SIZE, gameState.totalQuestions);
+    
+    if (startIndex >= gameState.totalQuestions) {
+        console.log('All questions exhausted');
+        return false; // 더 이상 로드할 데이터 없음
+    }
+    
+    // 순차적으로 데이터 가져오기 (중복 방지)
+    const batchData = gameState.persons.slice(startIndex, endIndex);
+    console.log(`Loading batch ${gameState.currentBatchIndex + 1}: ${startIndex}-${endIndex-1} (${batchData.length} items)`);
+    
+    // 스택을 완전히 비우고 새 배치로 교체
+    await clearCurrentStack();
+    
+    showLoadingIndicator();
+    await preloadImageStack(batchData);
+    hideLoadingIndicator();
+    
+    gameState.currentBatchIndex++;
+    return true;
+}
+
+async function clearCurrentStack() {
+    // 현재 스택의 모든 blob URL 정리
+    gameState.imageStack.forEach(item => {
+        if (item.blobUrl && item.blobUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(item.blobUrl);
+        }
+    });
+    gameState.imageStack = [];
+}
+
 async function loadPersonsData(topic) {
     try {
         const response = await fetch(`/api/persons/${topic}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        gameState.persons = await response.json();
+        const allPersons = await response.json();
         
-        if (gameState.persons.length === 0) {
+        if (allPersons.length === 0) {
             throw new Error('No data available.');
         }
+
+        // 데이터를 섞고 전체 저장 (한 번만 섞어서 순서 고정)
+        gameState.persons = shuffleArray(allPersons);
+        gameState.totalQuestions = gameState.persons.length;
+        gameState.currentBatchIndex = 0;
+        gameState.questionsAnswered = 0;
+        gameState.usedQuestions = []; // 사용된 문제 추적 초기화
+        
+        console.log(`Total questions: ${gameState.totalQuestions}`);
+        console.log('Questions order shuffled and fixed');
+        
+        // 첫 번째 배치 로드
+        await loadNextBatch();
+
     } catch (error) {
         throw error;
     }
 }
 
+// Fisher-Yates 셔플
+function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
 function loadQuestion() {
-    if (gameState.usedQuestions.length >= gameState.persons.length) {
-        endGame();
-        return;
+    // 스택이 비어있고 더 로드할 데이터가 있으면 다음 배치 로드
+    if (gameState.imageStack.length === 0) {
+        if (gameState.questionsAnswered < gameState.totalQuestions) {
+            console.log('Stack empty, loading next batch...');
+            loadNextBatch().then(success => {
+                if (success && gameState.imageStack.length > 0) {
+                    loadQuestion(); // 재귀적으로 다시 시도
+                } else {
+                    console.log('All questions completed!');
+                    endGame(); // 더 이상 로드할 데이터 없음
+                }
+            });
+            return;
+        } else {
+            console.log('All questions completed!');
+            endGame(); // 모든 데이터 소진
+            return;
+        }
     }
 
-    const randomIndex = selectRandomUnusedQuestion();
-    gameState.usedQuestions.push(randomIndex);
-    gameState.currentQuestion = randomIndex;
+    // 스택의 마지막 항목(LIFO)을 사용
+    const currentItem = gameState.imageStack[gameState.imageStack.length - 1];
     
-    const person = gameState.persons[gameState.currentQuestion];
-    updateQuestionDisplay(person);
+    // 중복 체크 (혹시 모를 상황 대비)
+    const questionId = currentItem.person.name + '_' + currentItem.originalUrl;
+    if (gameState.usedQuestions.includes(questionId)) {
+        console.warn('Duplicate question detected, skipping:', questionId);
+        gameState.imageStack.pop();
+        if (currentItem.blobUrl && currentItem.blobUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(currentItem.blobUrl);
+        }
+        loadQuestion(); // 다음 문제로
+        return;
+    }
+    
+    gameState.usedQuestions.push(questionId);
+    updateQuestionDisplay(currentItem);
     startTimer();
 }
 
-function selectRandomUnusedQuestion() {
-    let attempts = 0;
-    const maxAttempts = gameState.persons.length * 2;
-    let randomIndex;
-    
-    do {
-        randomIndex = getRandomIndex(gameState.persons.length);
-        attempts++;
-    } while (gameState.usedQuestions.includes(randomIndex) && attempts < maxAttempts);
-    
-    if (gameState.usedQuestions.includes(randomIndex)) {
-        for (let i = 0; i < gameState.persons.length; i++) {
-            if (!gameState.usedQuestions.includes(i)) {
-                return i;
-            }
-        }
-    }
-    
-    return randomIndex;
-}
-
-function updateQuestionDisplay(person) {
-    elements.personImage.src = person.image;
-    elements.personImage.alt = `${person.name} image`;
+function updateQuestionDisplay(stackItem) {
+    // blob URL을 직접 사용
+    elements.personImage.src = stackItem.blobUrl;
+    elements.personImage.alt = `${stackItem.person.name} image`;
     elements.personImage.loading = 'eager';
     
     updateImageClasses();
-    updateCountryNameDisplay(person);
+    updateCountryNameDisplay(stackItem.person);
     
     updateDisplay('resultContainer', false);
     updateDisplay('clickInstruction', true);
@@ -238,9 +375,9 @@ function showAnswer() {
     clearTimers();
     
     elements.timerElement.classList.remove('time-warning', 'time-expired');
-    const person = gameState.persons[gameState.currentQuestion];
+    const currentItem = gameState.imageStack[gameState.imageStack.length - 1];
     
-    elements.correctAnswerElement.textContent = person.name;
+    elements.correctAnswerElement.textContent = currentItem.person.name;
     
     updateDisplay('resultContainer', true);
     updateDisplay('clickInstruction', false);
@@ -252,9 +389,24 @@ function showAnswer() {
 function nextQuestion() {
     if (!gameState.waitingForClick) return;
     
+    // 현재 문제를 스택에서 제거하고 blob URL 정리
+    const removedItem = gameState.imageStack.pop();
+    if (removedItem && removedItem.blobUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(removedItem.blobUrl);
+    }
+    
+    // 답변한 문제 수 증가
+    gameState.questionsAnswered++;
+    
     clearTimers();
     updateDisplay('resultContainer', false);
     elements.gameArea.classList.remove('clickable');
+    
+    // 진행 상황 로그
+    console.log(`Progress: ${gameState.questionsAnswered}/${gameState.totalQuestions} questions answered`);
+    console.log(`Stack remaining: ${gameState.imageStack.length}`);
+    console.log(`Used questions: ${gameState.usedQuestions.length}`);
+    
     loadQuestion();
 }
 
@@ -277,13 +429,24 @@ function resetGame() {
 }
 
 function resetGameState() {
+    // 남은 blob URL들 정리
+    gameState.imageStack.forEach(item => {
+        if (item.blobUrl && item.blobUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(item.blobUrl);
+        }
+    });
+    
     gameState = {
         ...gameState,
         currentQuestion: 0,
         timeLeft: gameState.defaultTime,
         gameActive: false,
         waitingForClick: false,
-        usedQuestions: []
+        imageStack: [],
+        usedQuestions: [],
+        currentBatchIndex: 0,
+        totalQuestions: 0,
+        questionsAnswered: 0
     };
 }
 
