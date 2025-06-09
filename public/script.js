@@ -1,159 +1,115 @@
-// Game state variables
-let currentQuestion = 0;
-let timeLeft = 5;
-let defaultTime = 5; // Default timer setting
-let questionTimer;
-let autoNextTimer;
-let gameActive = false;
-let waitingForClick = false;
-let currentTopic = 'global-celebrities';
-let persons = [];
-let usedQuestions = []; // Track used questions
-let autoNextEnabled = true; // Auto-advance on timer expiry
+// Constants
+const GAME_SETTINGS = {
+    DEFAULT_TIME: 5,
+    DEFAULT_TOPIC: 'global-celebrities',
+    AUTO_NEXT_DELAY: 2000,
+    TIMER_WARNING_THRESHOLD: 2
+};
 
-// Available topics (only those with prepared images)
-const availableTopics = {
-    'animals': 'Animals',
-    'dog-breeds': 'Dog Breeds',
-    'global-celebrities': 'Global Stars',
-    'kpop-stars': 'K-pop Stars',
-    'historical-figures': 'Historical Figures',
-    'korean-celebrities': 'Korean Celebrities',
-    'flags': 'Flags',
-    'capitals': 'Capitals'
+const TOPICS = {
+    ANIMALS: 'animals',
+    DOG_BREEDS: 'dog-breeds',
+    GLOBAL_CELEBRITIES: 'global-celebrities',
+    KPOP_STARS: 'kpop-stars',
+    HISTORICAL_FIGURES: 'historical-figures',
+    KOREAN_CELEBRITIES: 'korean-celebrities',
+    FLAGS: 'flags',
+    CAPITALS: 'capitals'
+};
+
+const TOPIC_LABELS = {
+    [TOPICS.ANIMALS]: 'Animals',
+    [TOPICS.DOG_BREEDS]: 'Dog Breeds',
+    [TOPICS.GLOBAL_CELEBRITIES]: 'Global Stars',
+    [TOPICS.KPOP_STARS]: 'K-pop Stars',
+    [TOPICS.HISTORICAL_FIGURES]: 'Historical Figures',
+    [TOPICS.KOREAN_CELEBRITIES]: 'Korean Celebrities',
+    [TOPICS.FLAGS]: 'Flags',
+    [TOPICS.CAPITALS]: 'Capitals'
+};
+
+// Game state
+let gameState = {
+    currentQuestion: 0,
+    timeLeft: GAME_SETTINGS.DEFAULT_TIME,
+    defaultTime: GAME_SETTINGS.DEFAULT_TIME,
+    questionTimer: null,
+    autoNextTimer: null,
+    gameActive: false,
+    waitingForClick: false,
+    currentTopic: TOPICS.GLOBAL_CELEBRITIES,
+    persons: [],
+    usedQuestions: [],
+    autoNextEnabled: true
 };
 
 // DOM elements
-const startScreen = document.getElementById('start-screen');
-const gameArea = document.getElementById('game-area');
-const gameInfo = document.getElementById('game-info');
-const gameOver = document.getElementById('game-over');
-const resultContainer = document.getElementById('result-container');
-const personImage = document.getElementById('person-image');
-const timerElement = document.getElementById('timer');
-const correctAnswerElement = document.getElementById('correct-answer');
-const clickInstruction = document.querySelector('.click-instruction');
-const logoContainer = document.querySelector('.logo-container');
-const countryNameElement = document.getElementById('country-name');
+const elements = {
+    startScreen: document.getElementById('start-screen'),
+    gameArea: document.getElementById('game-area'),
+    gameInfo: document.getElementById('game-info'),
+    gameOver: document.getElementById('game-over'),
+    resultContainer: document.getElementById('result-container'),
+    personImage: document.getElementById('person-image'),
+    timerElement: document.getElementById('timer'),
+    correctAnswerElement: document.getElementById('correct-answer'),
+    clickInstruction: document.querySelector('.click-instruction'),
+    logoContainer: document.querySelector('.logo-container'),
+    countryNameElement: document.getElementById('country-name')
+};
 
-// Image preloading variables
-let preloadedImages = new Map();
-let isPreloading = false;
-
-// WebP 지원 확인
-function supportsWebP() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
-    return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+// Utility functions
+function isKoreanTopic(topic) {
+    return topic === TOPICS.KOREAN_CELEBRITIES || topic === TOPICS.KPOP_STARS;
 }
 
-const isWebPSupported = supportsWebP();
+function isGeographyTopic(topic) {
+    return topic === TOPICS.FLAGS || topic === TOPICS.CAPITALS;
+}
 
-// 이미지 URL을 최적화된 형식으로 변환
-function getOptimizedImageUrl(originalUrl) {
-    if (isWebPSupported) {
-        return originalUrl.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+function getRandomIndex(max) {
+    return Math.floor(Math.random() * max);
+}
+
+function clearTimers() {
+    if (gameState.questionTimer) {
+        clearInterval(gameState.questionTimer);
+        gameState.questionTimer = null;
     }
-    return originalUrl;
+    if (gameState.autoNextTimer) {
+        clearTimeout(gameState.autoNextTimer);
+        gameState.autoNextTimer = null;
+    }
 }
 
-// Progressive image loading with WebP support
-function loadImageWithFallback(src, fallbackSrc = null) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        
-        // WebP 지원 시 WebP 이미지 먼저 시도
-        const webpSrc = getOptimizedImageUrl(src);
-        
-        img.onload = () => resolve(img);
-        img.onerror = () => {
-            // WebP 실패 시 원본 이미지로 fallback
-            if (webpSrc !== src) {
-                const fallbackImg = new Image();
-                fallbackImg.onload = () => resolve(fallbackImg);
-                fallbackImg.onerror = () => reject(new Error('Image loading failed'));
-                fallbackImg.src = fallbackSrc || src;
-            } else {
-                reject(new Error('Image loading failed'));
-            }
-        };
-        
-        img.src = webpSrc;
-    });
+function updateDisplay(element, show, displayType = 'block') {
+    if (elements[element]) {
+        elements[element].style.display = show ? displayType : 'none';
+    }
 }
 
-// Preload all images for a topic with batching
-function preloadImages(topic, persons) {
-    return new Promise((resolve) => {
-        if (preloadedImages.has(topic)) {
-            resolve();
-            return;
-        }
-        
-        isPreloading = true;
-        
-        // 배치 처리로 동시 로딩 제한 (네트워크 과부하 방지)
-        const BATCH_SIZE = 5;
-        let loadedCount = 0;
-        
-        const loadBatch = (startIndex) => {
-            const batch = persons.slice(startIndex, startIndex + BATCH_SIZE);
-            const batchPromises = batch.map((person) => {
-                return loadImageWithFallback(person.image)
-                    .then(() => {
-                        loadedCount++;
-                        // 진행률 표시
-                        const progress = Math.round((loadedCount / persons.length) * 100);
-                        updateLoadingProgress(progress);
-                    })
-                    .catch(() => {
-                        loadedCount++;
-                        console.warn(`Failed to load image: ${person.image}`);
-                    });
-            });
-            
-            return Promise.all(batchPromises).then(() => {
-                if (startIndex + BATCH_SIZE < persons.length) {
-                    return loadBatch(startIndex + BATCH_SIZE);
-                }
-            });
-        };
-        
-        loadBatch(0).then(() => {
-            preloadedImages.set(topic, true);
-            isPreloading = false;
-            resolve();
-        });
-    });
-}
-
-// Game start function
+// Game functions
 async function startGame(topic = null) {
     if (topic) {
-        currentTopic = topic;
+        gameState.currentTopic = topic;
     }
     
-    // Show loading indicator
     showLoadingIndicator();
     
-    // Load data
     try {
-        await loadPersonsData(currentTopic);
-        
-        // Preload all images for better performance
-        await preloadImages(currentTopic, persons);
+        await loadPersonsData(gameState.currentTopic);
         
         hideLoadingIndicator();
         
-        startScreen.style.display = 'none';
-        gameArea.style.display = 'block';
-        gameInfo.style.display = 'flex';
-        logoContainer.style.display = 'none'; // Hide logo during game
-        gameActive = true;
-        currentQuestion = 0;
-        waitingForClick = false;
-        usedQuestions = []; // Reset used questions list
+        updateDisplay('startScreen', false);
+        updateDisplay('gameArea', true);
+        updateDisplay('gameInfo', true, 'flex');
+        updateDisplay('logoContainer', false);
+        
+        gameState.gameActive = true;
+        gameState.currentQuestion = 0;
+        gameState.waitingForClick = false;
+        gameState.usedQuestions = [];
         
         loadQuestion();
     } catch (error) {
@@ -162,16 +118,15 @@ async function startGame(topic = null) {
     }
 }
 
-// Load data from server
 async function loadPersonsData(topic) {
     try {
         const response = await fetch(`/api/persons/${topic}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        persons = await response.json();
+        gameState.persons = await response.json();
         
-        if (persons.length === 0) {
+        if (gameState.persons.length === 0) {
             throw new Error('No data available.');
         }
     } catch (error) {
@@ -179,279 +134,199 @@ async function loadPersonsData(topic) {
     }
 }
 
-// Array shuffle function removed - now using random selection
-
-// Load question function (prevent duplicates)
 function loadQuestion() {
-    // End game if all questions have been used
-    if (usedQuestions.length >= persons.length) {
+    if (gameState.usedQuestions.length >= gameState.persons.length) {
         endGame();
         return;
     }
 
-    let randomIndex;
-    let attempts = 0;
-    const maxAttempts = persons.length * 2; // Prevent infinite loop
+    const randomIndex = selectRandomUnusedQuestion();
+    gameState.usedQuestions.push(randomIndex);
+    gameState.currentQuestion = randomIndex;
     
-    // Select random unused question
-    do {
-        randomIndex = Math.floor(Math.random() * persons.length);
-        attempts++;
-    } while (usedQuestions.includes(randomIndex) && attempts < maxAttempts);
-    
-    // If no unused question found, select first available unused one
-    if (usedQuestions.includes(randomIndex)) {
-        for (let i = 0; i < persons.length; i++) {
-            if (!usedQuestions.includes(i)) {
-                randomIndex = i;
-                break;
-            }
-        }
-    }
-    
-    // Add to used questions list
-    usedQuestions.push(randomIndex);
-    currentQuestion = randomIndex;
-    
-    const person = persons[currentQuestion];
-    
-    // Set image with optimized loading
-    const optimizedImageUrl = getOptimizedImageUrl(person.image);
-    personImage.src = optimizedImageUrl;
-    personImage.alt = `${person.name} image`;
-    
-    // Add loading attribute for better performance
-    personImage.loading = 'eager';
-    
-    // Add flag-image class for flags and capitals topics, korean-celebrity-image for korean celebrities and kpop stars
-    personImage.classList.remove('flag-image', 'korean-celebrity-image');
-    if (currentTopic === 'flags' || currentTopic === 'capitals') {
-        personImage.classList.add('flag-image');
-    } else if (currentTopic === 'korean-celebrities' || currentTopic === 'kpop-stars') {
-        personImage.classList.add('korean-celebrity-image');
-    }
-    
-    // Show country name for capitals topic
-    if (currentTopic === 'capitals' && person.countryName) {
-        countryNameElement.textContent = person.countryName;
-        countryNameElement.style.display = 'block';
-    } else {
-        countryNameElement.style.display = 'none';
-    }
-    
-    // Hide result container and show click instruction
-    resultContainer.style.display = 'none';
-    clickInstruction.style.display = 'block';
-    waitingForClick = false;
-    
-    // Start timer
+    const person = gameState.persons[gameState.currentQuestion];
+    updateQuestionDisplay(person);
     startTimer();
 }
 
-// Start timer function (decorative)
+function selectRandomUnusedQuestion() {
+    let attempts = 0;
+    const maxAttempts = gameState.persons.length * 2;
+    let randomIndex;
+    
+    do {
+        randomIndex = getRandomIndex(gameState.persons.length);
+        attempts++;
+    } while (gameState.usedQuestions.includes(randomIndex) && attempts < maxAttempts);
+    
+    if (gameState.usedQuestions.includes(randomIndex)) {
+        for (let i = 0; i < gameState.persons.length; i++) {
+            if (!gameState.usedQuestions.includes(i)) {
+                return i;
+            }
+        }
+    }
+    
+    return randomIndex;
+}
+
+function updateQuestionDisplay(person) {
+    elements.personImage.src = person.image;
+    elements.personImage.alt = `${person.name} image`;
+    elements.personImage.loading = 'eager';
+    
+    updateImageClasses();
+    updateCountryNameDisplay(person);
+    
+    updateDisplay('resultContainer', false);
+    updateDisplay('clickInstruction', true);
+    gameState.waitingForClick = false;
+}
+
+function updateImageClasses() {
+    elements.personImage.classList.remove('flag-image', 'korean-celebrity-image');
+    if (isGeographyTopic(gameState.currentTopic)) {
+        elements.personImage.classList.add('flag-image');
+    } else if (isKoreanTopic(gameState.currentTopic)) {
+        elements.personImage.classList.add('korean-celebrity-image');
+    }
+}
+
+function updateCountryNameDisplay(person) {
+    if (gameState.currentTopic === TOPICS.CAPITALS && person.countryName) {
+        elements.countryNameElement.textContent = person.countryName;
+        updateDisplay('countryNameElement', true);
+    } else {
+        updateDisplay('countryNameElement', false);
+    }
+}
+
 function startTimer() {
-    timeLeft = defaultTime;
+    gameState.timeLeft = gameState.defaultTime;
     updateTimerDisplay();
     
-    questionTimer = setInterval(() => {
-        timeLeft--;
+    gameState.questionTimer = setInterval(() => {
+        gameState.timeLeft--;
         updateTimerDisplay();
         
-        if (timeLeft <= 2) {
-            timerElement.classList.add('time-warning');
+        if (gameState.timeLeft <= GAME_SETTINGS.TIMER_WARNING_THRESHOLD) {
+            elements.timerElement.classList.add('time-warning');
         }
         
-        if (timeLeft <= 0) {
-            clearInterval(questionTimer);
-            timerElement.textContent = "0";
-            timerElement.classList.add('time-expired');
-            
-            // Auto-advance if enabled
-            if (autoNextEnabled && !waitingForClick) {
-                showAnswer();
-                // Auto-proceed to next question after 2 seconds
-                autoNextTimer = setTimeout(() => {
-                    if (waitingForClick) {
-                        nextQuestion();
-                    }
-                }, 2000);
-            }
+        if (gameState.timeLeft <= 0) {
+            handleTimerExpired();
         }
     }, 1000);
 }
 
-// Update timer display function
-function updateTimerDisplay() {
-    timerElement.textContent = timeLeft;
+function handleTimerExpired() {
+    clearInterval(gameState.questionTimer);
+    elements.timerElement.textContent = "0";
+    elements.timerElement.classList.add('time-expired');
+    
+    if (gameState.autoNextEnabled && !gameState.waitingForClick) {
+        showAnswer();
+        gameState.autoNextTimer = setTimeout(() => {
+            if (gameState.waitingForClick) {
+                nextQuestion();
+            }
+        }, GAME_SETTINGS.AUTO_NEXT_DELAY);
+    }
 }
 
-// Show answer function
 function showAnswer() {
-    // Clear any existing question timer
-    if (questionTimer) {
-        clearInterval(questionTimer);
-    }
+    clearTimers();
     
-    timerElement.classList.remove('time-warning', 'time-expired');
-    const person = persons[currentQuestion];
+    elements.timerElement.classList.remove('time-warning', 'time-expired');
+    const person = gameState.persons[gameState.currentQuestion];
     
-    // Show Korean name for Korean celebrities and K-pop stars
-    if ((currentTopic === 'korean-celebrities' || currentTopic === 'kpop-stars') && person.koreanName) {
-        correctAnswerElement.textContent = `${person.name}`;
-    } else {
-        correctAnswerElement.textContent = person.name;
-    }
+    elements.correctAnswerElement.textContent = person.name;
     
-    resultContainer.style.display = 'block';
-    clickInstruction.style.display = 'none';
+    updateDisplay('resultContainer', true);
+    updateDisplay('clickInstruction', false);
     
-    waitingForClick = true;
-    gameArea.classList.add('clickable');
+    gameState.waitingForClick = true;
+    elements.gameArea.classList.add('clickable');
 }
 
-// Next question function
 function nextQuestion() {
-    if (!waitingForClick) return;
+    if (!gameState.waitingForClick) return;
     
-    // Clear auto-next timer if it exists
-    if (autoNextTimer) {
-        clearTimeout(autoNextTimer);
-        autoNextTimer = null;
-    }
-    
-    resultContainer.style.display = 'none';
-    gameArea.classList.remove('clickable');
-    loadQuestion(); // Load new random question
+    clearTimers();
+    updateDisplay('resultContainer', false);
+    elements.gameArea.classList.remove('clickable');
+    loadQuestion();
 }
 
-// End game function
 function endGame() {
-    gameActive = false;
-    gameArea.style.display = 'none';
-    gameInfo.style.display = 'none';
-    gameOver.style.display = 'block';
+    gameState.gameActive = false;
+    updateDisplay('gameArea', false);
+    updateDisplay('gameInfo', false);
+    updateDisplay('gameOver', true);
 }
 
-// Reset game function
 function resetGame() {
-    gameOver.style.display = 'none';
-    resultContainer.style.display = 'none';
-    startScreen.style.display = 'block';
-    logoContainer.style.display = 'block'; // Show logo on main screen
+    updateDisplay('gameOver', false);
+    updateDisplay('resultContainer', false);
+    updateDisplay('startScreen', true);
+    updateDisplay('logoContainer', true);
     
-    // Reset game state
-    currentQuestion = 0;
-    timeLeft = defaultTime;
-    gameActive = false;
-    waitingForClick = false;
-    usedQuestions = []; // Reset used questions list
-    
-    // Clear timers
-    if (questionTimer) {
-        clearInterval(questionTimer);
-    }
-    if (autoNextTimer) {
-        clearTimeout(autoNextTimer);
-        autoNextTimer = null;
-    }
-    
-    // Reset UI
-    timerElement.classList.remove('time-warning', 'time-expired');
-    updateTimerDisplay();
-    gameArea.classList.remove('clickable');
+    resetGameState();
+    clearTimers();
+    resetUI();
 }
 
-// Image load error handling
-personImage.addEventListener('error', function() {
-    this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzUwIiBoZWlnaHQ9IjM1MCIgdmlld0JveD0iMCAwIDM1MCAzNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzNTAiIGhlaWdodD0iMzUwIiBmaWxsPSIjRjdGQUZDIi8+CjxjaXJjbGUgY3g9IjE3NSIgY3k9IjE0MCIgcj0iNDAiIGZpbGw9IiNFMkU4RjAiLz4KPHBhdGggZD0iTTEwMCAyODBDNTAgMjIwIDEyMCAyMDAgMjMwIDIyMEM1MCAyMzAgMzAwIDI0MCAyNTAgMjgwSDEwMFoiIGZpbGw9IiNFMkU4RjAiLz4KPHN2Zz4=';
-    this.alt = 'Image could not be loaded.';
-});
+function resetGameState() {
+    gameState = {
+        ...gameState,
+        currentQuestion: 0,
+        timeLeft: gameState.defaultTime,
+        gameActive: false,
+        waitingForClick: false,
+        usedQuestions: []
+    };
+}
 
-// Click event handling
-document.addEventListener('click', function(event) {
-    // Exclude topic buttons, preset buttons, slider, exit button, reset buttons, and toggle switch
-    if (event.target.classList.contains('topic-btn') || 
-        event.target.classList.contains('preset-btn') ||
-        event.target.classList.contains('time-btn') ||
-        event.target.id === 'timer-slider' ||
-        event.target.id === 'auto-next-toggle' ||
-        event.target.classList.contains('toggle-slider') ||
-        event.target.classList.contains('compact-label') ||
-        event.target.closest('.toggle-switch') ||
-        event.target.textContent === 'Play Again' ||
-        event.target.id === 'start-btn' ||
-        event.target.id === 'exit-btn') {
-        return;
-    }
-    
-    if (gameActive) {
-        if (waitingForClick) {
-            // Continue to next question
-            nextQuestion();
-        } else {
-            // Show answer immediately
-            clearInterval(questionTimer);
-            showAnswer();
-        }
-    }
-});
+function resetUI() {
+    elements.timerElement.classList.remove('time-warning', 'time-expired');
+    updateTimerDisplay();
+    elements.gameArea.classList.remove('clickable');
+}
 
-// Exit game function
 function exitGame() {
-    // Clear any running timers
-    if (questionTimer) {
-        clearInterval(questionTimer);
-    }
-    if (autoNextTimer) {
-        clearTimeout(autoNextTimer);
-        autoNextTimer = null;
-    }
+    clearTimers();
+    resetGameState();
     
-    // Reset game state
-    gameActive = false;
-    waitingForClick = false;
-    currentQuestion = 0;
-    usedQuestions = []; // Reset used questions list
+    updateDisplay('gameArea', false);
+    updateDisplay('gameInfo', false);
+    updateDisplay('resultContainer', false);
+    updateDisplay('gameOver', false);
+    updateDisplay('startScreen', true);
+    updateDisplay('logoContainer', true);
     
-    // Hide game screens and show start screen
-    gameArea.style.display = 'none';
-    gameInfo.style.display = 'none';
-    resultContainer.style.display = 'none';
-    gameOver.style.display = 'none';
-    startScreen.style.display = 'block';
-    logoContainer.style.display = 'block'; // Show logo on main screen
-    
-    // Reset UI elements
-    timerElement.classList.remove('time-warning', 'time-expired');
-    gameArea.classList.remove('clickable');
-    timeLeft = defaultTime;
+    elements.timerElement.classList.remove('time-warning', 'time-expired');
+    elements.gameArea.classList.remove('clickable');
     updateTimerDisplay();
 }
 
-// Update timer from slider
 function updateTimer(value) {
-    defaultTime = parseInt(value);
-    timeLeft = defaultTime;
+    gameState.defaultTime = parseInt(value);
+    gameState.timeLeft = gameState.defaultTime;
     
-    // Update display value
-    document.getElementById('timer-value').textContent = defaultTime;
-    document.getElementById('timer').textContent = defaultTime;
+    document.getElementById('timer-value').textContent = gameState.defaultTime;
+    elements.timerElement.textContent = gameState.defaultTime;
 }
 
-// Set timer value from preset buttons
+function updateTimerDisplay() {
+    elements.timerElement.textContent = gameState.timeLeft;
+}
+
 function setTimerValue(seconds) {
     document.getElementById('timer-slider').value = seconds;
     updateTimer(seconds);
 }
 
-// Legacy function for compatibility (deprecated)
-function setTime(seconds) {
-    setTimerValue(seconds);
-}
-
-// Loading indicator functions
 function showLoadingIndicator() {
-    // Create loading overlay if it doesn't exist
     let loadingOverlay = document.getElementById('loading-overlay');
     if (!loadingOverlay) {
         loadingOverlay = document.createElement('div');
@@ -490,27 +365,58 @@ function hideLoadingIndicator() {
     }
 }
 
-// Toggle auto-next setting
 function toggleAutoNext() {
     const toggle = document.getElementById('auto-next-toggle');
-    autoNextEnabled = toggle.checked;
+    gameState.autoNextEnabled = toggle.checked;
 }
 
+// Event Listeners
+elements.personImage.addEventListener('error', function() {
+    this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzUwIiBoZWlnaHQ9IjM1MCIgdmlld0JveD0iMCAwIDM1MCAzNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzNTAiIGhlaWdodD0iMzUwIiBmaWxsPSIjRjdGQUZDIi8+CjxjaXJjbGUgY3g9IjE3NSIgY3k9IjE0MCIgcj0iNDAiIGZpbGw9IiNFMkU4RjAiLz4KPHBhdGggZD0iTTEwMCAyODBDNTAgMjIwIDEyMCAyMDAgMjMwIDIyMEM1MCAyMzAgMzAwIDI0MCAyNTAgMjgwSDEwMFoiIGZpbGw9IiNFMkU4RjAiLz4KPHN2Zz4=';
+    this.alt = 'Image could not be loaded.';
+});
 
+document.addEventListener('click', function(event) {
+    if (shouldIgnoreClick(event.target)) return;
+    
+    if (gameState.gameActive) {
+        handleGameClick();
+    }
+});
+
+function shouldIgnoreClick(target) {
+    return target.classList.contains('topic-btn') || 
+           target.classList.contains('preset-btn') ||
+           target.classList.contains('time-btn') ||
+           target.id === 'timer-slider' ||
+           target.id === 'auto-next-toggle' ||
+           target.classList.contains('toggle-slider') ||
+           target.classList.contains('compact-label') ||
+           target.closest('.toggle-switch') ||
+           target.textContent === 'Play Again' ||
+           target.id === 'start-btn' ||
+           target.id === 'exit-btn';
+}
+
+function handleGameClick() {
+    if (gameState.waitingForClick) {
+        nextQuestion();
+    } else {
+        clearInterval(gameState.questionTimer);
+        showAnswer();
+    }
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Set initial state
-    gameArea.style.display = 'none';
-    gameInfo.style.display = 'none';
-    gameOver.style.display = 'none';
-    resultContainer.style.display = 'none';
+    updateDisplay('gameArea', false);
+    updateDisplay('gameInfo', false);
+    updateDisplay('gameOver', false);
+    updateDisplay('resultContainer', false);
     
-    // Add event listener for auto-next toggle
     const autoNextToggle = document.getElementById('auto-next-toggle');
     if (autoNextToggle) {
         autoNextToggle.addEventListener('change', toggleAutoNext);
-        // Set initial state
-        autoNextEnabled = autoNextToggle.checked;
+        gameState.autoNextEnabled = autoNextToggle.checked;
     }
 }); 

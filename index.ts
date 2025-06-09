@@ -14,32 +14,14 @@ app.use(compression({
     }
 }));
 
-// 이미지 최적화 전략: kpop-stars는 원본, 나머지는 최적화된 이미지 사용
-const optimizedImagesPath = path.join(__dirname, 'public', 'images-optimized');
-const originalImagesPath = path.join(__dirname, 'public', 'images');
+// 모든 이미지는 원본 public/images 폴더에서 서빙
+const imagesPath = path.join(__dirname, 'public', 'images');
 
-// kpop-stars는 원본 이미지 사용 (고화질 필요)
-app.use('/images/kpop-stars', express.static(path.join(originalImagesPath, 'kpop-stars'), {
+app.use('/images', express.static(imagesPath, {
     maxAge: '1y', // 이미지 캐싱 1년
     etag: true,
     lastModified: true
 }));
-
-// 나머지는 최적화된 이미지 사용
-if (fs.existsSync(optimizedImagesPath)) {
-    app.use('/images', express.static(optimizedImagesPath, {
-        maxAge: '1y', // 이미지 캐싱 1년
-        etag: true,
-        lastModified: true
-    }));
-} else {
-    console.log('최적화된 이미지가 없습니다. 모든 이미지를 원본으로 사용합니다.');
-    app.use('/images', express.static(originalImagesPath, {
-        maxAge: '1y', // 이미지 캐싱 1년
-        etag: true,
-        lastModified: true
-    }));
-}
 
 app.use(express.static(path.join(__dirname, 'public'), {
     maxAge: '1d',
