@@ -87,9 +87,22 @@ function clearTimers() {
     }
 }
 
-function updateDisplay(element, show, displayType = 'block') {
-    if (elements[element]) {
-        elements[element].style.display = show ? displayType : 'none';
+function updateDisplay(elementKey, show, displayType = 'block') {
+    const el = elements[elementKey];
+    if (!el) return;
+    if (show) {
+        el.style.display = displayType;
+    } else {
+        if (elementKey === 'resultContainer') {
+            // display는 유지, 내부 내용만 비움
+            elements.correctAnswerElement.textContent = '';
+            el.querySelector('.click-hint').style.visibility = 'hidden';
+        } else {
+            el.style.display = 'none';
+        }
+    }
+    if (show && elementKey === 'resultContainer') {
+        el.querySelector('.click-hint').style.visibility = 'visible';
     }
 }
 
@@ -422,6 +435,7 @@ function resetGame() {
     updateDisplay('resultContainer', false);
     updateDisplay('startScreen', true);
     updateDisplay('logoContainer', true);
+    updateDisplay('clickInstruction', false);
     
     resetGameState();
     clearTimers();
@@ -466,6 +480,7 @@ function exitGame() {
     updateDisplay('gameOver', false);
     updateDisplay('startScreen', true);
     updateDisplay('logoContainer', true);
+    updateDisplay('clickInstruction', false);
     
     elements.timerElement.classList.remove('time-warning', 'time-expired');
     elements.gameArea.classList.remove('clickable');
@@ -576,6 +591,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateDisplay('gameInfo', false);
     updateDisplay('gameOver', false);
     updateDisplay('resultContainer', false);
+    updateDisplay('clickInstruction', false);
     
     const autoNextToggle = document.getElementById('auto-next-toggle');
     if (autoNextToggle) {

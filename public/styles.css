@@ -164,8 +164,8 @@ p, .click-instruction, .click-hint, #country-name, #result-text, #correct-answer
 }
 
 #person-image {
-    width: 405px;
-    height: 405px;
+    width: 550px;
+    height: 495px;
     object-fit: cover;
     border-radius: 15px;
     border: 5px solid #e2e8f0;
@@ -205,10 +205,11 @@ p, .click-instruction, .click-hint, #country-name, #result-text, #correct-answer
 
 #result-container {
     background: #f7fafc;
-    padding: 30px;
+    padding: 6px;
+    margin: 4px 0;
     border-radius: 10px;
-    margin: 20px 0;
     animation: fadeIn 0.5s ease;
+    min-height: 80px;
 }
 
 @keyframes fadeIn {
@@ -225,7 +226,7 @@ p, .click-instruction, .click-hint, #country-name, #result-text, #correct-answer
 #correct-answer {
     font-size: 2em;
     color: #805ad5;
-    margin-bottom: 20px;
+    margin-bottom: 4px;
     font-weight: bold;
 }
 
