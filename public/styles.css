@@ -722,3 +722,47 @@ h1 {
     font-weight: 500;
     user-select: none;
 }
+
+#feedback-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 24px;
+    font-size: 1em;
+    color: #805ad5;
+    background: #f7fafc;
+    border-radius: 8px;
+    padding: 8px 18px;
+    box-shadow: 0 2px 8px rgba(128,90,213,0.08);
+}
+#feedback-area a {
+    color: #805ad5;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+#feedback-area a:hover {
+    color: #4a5568;
+    text-decoration: underline;
+}
+#feedback-area a:focus {
+    outline: none;
+    box-shadow: none;
+}
+#github-link {
+    display: flex;
+    align-items: center;
+    margin-left: 6px;
+}
+#github-icon {
+    margin-left: 2px;
+    vertical-align: middle;
+    width: 30px;
+    height: 30px;
+    fill: #805ad5;
+    transition: fill 0.2s;
+}
+#github-link:hover #github-icon {
+    fill: #4a5568;
+}
