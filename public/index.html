@@ -40,8 +40,8 @@
             <p>The answer will appear after 5 seconds.</p>
             
             <div class="time-selection">
-                <div class="timer-header">
-                    <h3>Set timer: <span id="timer-value">5</span> seconds</h3>
+                <div class="timer-header" style="justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0;">Set timer: <span id="timer-value">5</span> seconds</h3>
                     <div class="auto-next-compact">
                         <span class="compact-label">Auto-advance</span>
                         <label class="toggle-switch">
@@ -50,17 +50,19 @@
                         </label>
                     </div>
                 </div>
-                <div class="timer-slider-container">
-                    <span class="slider-label">2s</span>
-                    <input type="range" id="timer-slider" min="2" max="30" value="5" step="1" oninput="updateTimer(this.value)">
-                    <span class="slider-label">30s</span>
-                </div>
-                <div class="timer-presets">
-                    <button class="preset-btn" onclick="setTimerValue(2)">2s</button>
-                    <button class="preset-btn" onclick="setTimerValue(3)">3s</button>
-                    <button class="preset-btn" onclick="setTimerValue(5)">5s</button>
-                    <button class="preset-btn" onclick="setTimerValue(10)">10s</button>
-                    <button class="preset-btn" onclick="setTimerValue(15)">15s</button>
+                <div class="timer-slider-row" style="display: flex; align-items: center; gap: 16px; margin-top: 8px;">
+                    <div class="timer-slider-container" style="flex: 1;">
+                        <span class="slider-label">2s</span>
+                        <input type="range" id="timer-slider" min="2" max="30" value="5" step="1" oninput="updateTimer(this.value)">
+                        <span class="slider-label">30s</span>
+                    </div>
+                    <div class="timer-presets">
+                        <button class="preset-btn" onclick="setTimerValue(2)">2s</button>
+                        <button class="preset-btn" onclick="setTimerValue(3)">3s</button>
+                        <button class="preset-btn" onclick="setTimerValue(5)">5s</button>
+                        <button class="preset-btn" onclick="setTimerValue(10)">10s</button>
+                        <button class="preset-btn" onclick="setTimerValue(15)">15s</button>
+                    </div>
                 </div>
             </div>
             

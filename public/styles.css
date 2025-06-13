@@ -57,20 +57,53 @@ body::before {
 }
 
 .container {
+    margin: 20px auto;
+    min-height: 40px;
     background: white;
     border-radius: 20px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    max-width: 900px;
+    max-width: 600px;
     width: 90%;
-    padding: 30px;
+    padding: 13px;
     text-align: center;
 }
 
-h1 {
-    color: #4a5568;
-    margin-bottom: 30px;
-    font-size: 2.5em;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+h1, h2, h3 {
+    font-size: 81%;
+}
+
+p, .click-instruction, .click-hint, #country-name, #result-text, #correct-answer {
+    font-size: 81%;
+}
+
+#game-info {
+    font-size: 0.95em;
+    padding: 10px;
+}
+
+#timer {
+    font-size: 1.1em;
+}
+
+.preset-btn {
+    font-size: 0.9em;
+    padding: 7px 14px;
+}
+
+.timer-header h3 {
+    font-size: 1em;
+}
+
+.topic-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.topic-btn {
+    padding: 7px 0;
+    font-size: 0.68em;
 }
 
 .logo-container {
@@ -78,7 +111,7 @@ h1 {
 }
 
 #game-logo {
-    width: 250px;
+    width: 168px;
     height: auto;
     max-width: 100%;
     transition: transform 0.3s ease;
@@ -131,8 +164,8 @@ h1 {
 }
 
 #person-image {
-    width: 600px;
-    height: 600px;
+    width: 405px;
+    height: 405px;
     object-fit: cover;
     border-radius: 15px;
     border: 5px solid #e2e8f0;
@@ -221,9 +254,7 @@ h1 {
 }
 
 #start-screen p {
-    margin-bottom: 15px;
-    font-size: 1.1em;
-    color: #718096;
+    margin: 8px 0;
 }
 
 #start-btn, #game-over button {
@@ -268,12 +299,11 @@ h1 {
 
 /* 슬라이더 컨테이너 */
 .timer-slider-container {
+    flex: 1;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 20px;
-    padding: 0 20px;
+    gap: 10px;
+    margin-left: 12px;
 }
 
 .slider-label {
@@ -328,9 +358,9 @@ h1 {
 /* 프리셋 버튼들 */
 .timer-presets {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 8px;
-    flex-wrap: wrap;
+    margin: 8px 0 0 0;
 }
 
 .preset-btn {
@@ -360,7 +390,7 @@ h1 {
     background: linear-gradient(135deg, #f7fafc, #edf2f7);
     border: 2px solid #e2e8f0;
     border-radius: 15px;
-    padding: 25px;
+    padding: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
@@ -383,7 +413,7 @@ h1 {
 
 .topic-buttons {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(3, 1fr) !important;
     gap: 15px;
     margin-top: 20px;
 }
@@ -392,9 +422,9 @@ h1 {
     background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
     border: none;
-    padding: 15px 20px;
+    padding: 12px 0;
     border-radius: 12px;
-    font-size: 1.1em;
+    font-size: 0.85em;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -496,8 +526,7 @@ h1 {
     }
     
     .topic-buttons {
-        grid-template-columns: 1fr;
-        gap: 10px;
+        grid-template-columns: repeat(3, 1fr) !important;
     }
     
     .topic-btn {
@@ -644,11 +673,10 @@ h1 {
 /* Timer header with compact auto-next */
 .timer-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 15px;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 0;
 }
 
 .auto-next-compact {
@@ -728,7 +756,6 @@ h1 {
     align-items: center;
     justify-content: center;
     gap: 12px;
-    margin-top: 24px;
     font-size: 1em;
     color: #805ad5;
     background: #f7fafc;
@@ -765,4 +792,16 @@ h1 {
 }
 #github-link:hover #github-icon {
     fill: #4a5568;
+}
+
+@media (max-width: 600px) {
+    .container {
+        margin: 10px;
+        padding: 10px;
+    }
+}
+
+#start-screen {
+    padding-top: 16px;
+    padding-bottom: 16px;
 }
